@@ -2,8 +2,7 @@
  <div class="hike-container">
    <div class="hike-card">
     <img 
-      :src="hike.image || defaultImage" 
-      @error="handleError" 
+      :src="hike.image ? `https://into-the-land-backend.onrender.com${hike.image}` : ''" 
       alt="Hike Image" 
       class="hike-image" 
     />
@@ -17,18 +16,9 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
-
 defineProps({
   hike: Object
-})
-
-const defaultImage = '/default-image.jpg'  // Make sure this exists in your public folder
-
-// Fallback if image fails to load
-const handleError = (event) => {
-  event.target.src = defaultImage
-}
+});
 </script>
 
 <style scoped>
