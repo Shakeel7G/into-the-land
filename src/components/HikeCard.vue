@@ -1,12 +1,7 @@
 <template>
  <div class="hike-container">
    <div class="hike-card">
-    <img 
-      :src="hike.image || defaultImage" 
-      @error="handleError" 
-      alt="Hike Image" 
-      class="hike-image" 
-    />
+    <img :src="fullImageUrl" alt="Hike Image" class="hike-image" />
     <div class="hike-info">
       <h3>{{ hike.title }}</h3>
       <p>{{ hike.description }}</p>
@@ -17,18 +12,19 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
-
 defineProps({
   hike: Object
 })
 
-const defaultImage = '/default-image.jpg'  // make sure this exists in your public folder
+// Backend URL
+const BACKEND_URL = 'https://into-the-land-backend.onrender.com'
 
-// If image fails to load, use fallback
-const handleError = (event) => {
-  event.target.src = defaultImage
-}
+// Compute full image URL
+const fullImageUrl = computed(() => {
+  if (!hike.image) return ''         // fallback if no image
+  if (hike.image.startsWith('http')) return hike.image // already absolute
+  return `${BACKEND_URL}${hike.image}` // prepend backend URL
+})
 </script>
 
 <style scoped>
