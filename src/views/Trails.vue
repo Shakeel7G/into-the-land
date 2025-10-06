@@ -65,12 +65,13 @@ import HikeCard from '@/components/HikeCard.vue'
 import axios from 'axios'
 import { useRoute } from 'vue-router'
 
+const backendURL = 'https://into-the-land-backend.onrender.com'
 const route = useRoute()
+
 const trailsByArea = ref({})
 const searchQuery = ref('')
 const activeAreaFilter = ref('all')
 const activeDifficultyFilter = ref('all')
-const backendURL = 'https://into-the-land-backend.onrender.com'
 
 // Format area name for URL anchor
 const formatAnchorId = (area) => {
@@ -139,8 +140,11 @@ onMounted(async () => {
         const areaName = trail.area || trail.area_name || 'Unknown'
         if (!grouped[areaName]) grouped[areaName] = []
 
-        // Fix image URLs
-        trail.image = trail.image_url ? `${backendURL}${trail.image_url}` : trail.image || ''
+        // Fix image URL only
+        if (trail.image_url) {
+          trail.image = `${backendURL}${trail.image_url}`
+        }
+
         grouped[areaName].push(trail)
       })
       trailsByArea.value = grouped
@@ -170,7 +174,6 @@ onMounted(async () => {
   }
 })
 </script>
-
 <style scoped>
 .trails {
   padding: 1rem;
