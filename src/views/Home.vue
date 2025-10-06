@@ -189,9 +189,9 @@ const fetchHomeData = async () => {
     console.error("Error fetching home data:", error);
     homeData.value = {
       scrollImages: [
-       (process.env.VUE_APP_BACKEND_URL || 'http://localhost:4000') + '/images/table-mountain.jpg',
-      (process.env.VUE_APP_BACKEND_URL || 'http://localhost:4000') + '/images/drakensberg.jpg',
-        (process.env.VUE_APP_BACKEND_URL || 'http://localhost:4000') + '/images/cederberg.jpg'
+       (process.env.VUE_APP_BACKEND_URL || 'https://into-the-land-backend.onrender.com') + '/images/table-mountain.jpg',
+      (process.env.VUE_APP_BACKEND_URL || 'https://into-the-land-backend.onrender.com') + '/images/drakensberg.jpg',
+        (process.env.VUE_APP_BACKEND_URL || 'https://into-the-land-backend.onrender.com') + '/images/cederberg.jpg'
       ],
       scrollCaptions: [
         { title: 'Table Mountain', text: 'Iconic routes and skyline views over Cape Town...' },
