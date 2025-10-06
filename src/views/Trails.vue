@@ -60,111 +60,123 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
-import HikeCard from '@/components/HikeCard.vue'
-import axios from 'axios'
-import { useRoute } from 'vue-router'
+import { ref, onMounted, computed } from 'vue';
+import HikeCard from '@/components/HikeCard.vue';
+import axios from 'axios';
+import { useRoute } from 'vue-router';
 
-const route = useRoute()
-const trailsByArea = ref({})
-const searchQuery = ref('')
-const activeAreaFilter = ref('all')
-const activeDifficultyFilter = ref('all')
+const route = useRoute();
+const trailsByArea = ref({});
+const searchQuery = ref('');
+const activeAreaFilter = ref('all');
+const activeDifficultyFilter = ref('all');
 
 // Format area name for URL anchor
 const formatAnchorId = (area) => {
-  if (!area) return ''
+  if (!area) return '';
   return area.toLowerCase()
     .replace(/\s+/g, '-')
-    .replace(/[^a-z0-9-]/g, '')
-}
+    .replace(/[^a-z0-9-]/g, '');
+};
 
 // Set active area filter
 const setAreaFilter = (area) => {
-  activeAreaFilter.value = area
-}
+  activeAreaFilter.value = area;
+};
 
 // Clear all filters
 const clearFilters = () => {
-  activeAreaFilter.value = 'all'
-  activeDifficultyFilter.value = 'all'
-  searchQuery.value = ''
-}
+  activeAreaFilter.value = 'all';
+  activeDifficultyFilter.value = 'all';
+  searchQuery.value = '';
+};
 
 // Compute filtered trails
 const filteredTrails = computed(() => {
-  let result = {...trailsByArea.value}
+  let result = { ...trailsByArea.value };
 
   // Apply area filter
   if (activeAreaFilter.value !== 'all') {
-    const filtered = {}
+    const filtered = {};
     if (trailsByArea.value[activeAreaFilter.value]) {
-      filtered[activeAreaFilter.value] = trailsByArea.value[activeAreaFilter.value]
+      filtered[activeAreaFilter.value] = trailsByArea.value[activeAreaFilter.value];
     }
-    result = filtered
+    result = filtered;
   }
 
-  const searchLower = searchQuery.value.toLowerCase()
-  const finalResult = {}
+  const searchLower = searchQuery.value.toLowerCase();
+  const finalResult = {};
 
   for (const area in result) {
     const filteredTrails = result[area].filter(trail => {
       const matchesSearch = !searchQuery.value || 
         trail.title.toLowerCase().includes(searchLower) ||
-        (trail.description && trail.description.toLowerCase().includes(searchLower))
+        (trail.description && trail.description.toLowerCase().includes(searchLower));
       
       const matchesDifficulty = activeDifficultyFilter.value === 'all' || 
-        (trail.difficulty && trail.difficulty.toLowerCase() === activeDifficultyFilter.value.toLowerCase())
+        (trail.difficulty && trail.difficulty.toLowerCase() === activeDifficultyFilter.value.toLowerCase());
       
-      return matchesSearch && matchesDifficulty
-    })
+      return matchesSearch && matchesDifficulty;
+    });
 
     if (filteredTrails.length > 0) {
-      finalResult[area] = filteredTrails
+      finalResult[area] = filteredTrails;
     }
   }
 
-  return finalResult
-})
+  return finalResult;
+});
 
+// Fetch trails and normalize data
 onMounted(async () => {
   try {
-    const response = await axios.get(`https://into-the-land-backend.onrender.com/api/trails`)
-    const data = response.data
+    const response = await axios.get(`https://into-the-land-backend.onrender.com/api/trails`);
+    const data = response.data;
 
     if (Array.isArray(data)) {
-      const grouped = {}
+      const grouped = {};
+
       data.forEach(trail => {
-        const areaName = trail.area || trail.area_name || 'Unknown'
-        if (!grouped[areaName]) grouped[areaName] = []
-        grouped[areaName].push(trail)
-      })
-      trailsByArea.value = grouped
+        const areaName = trail.area || trail.area_name || 'Other';
+        trail.image = trail.image_url || '/default-image.jpg'; // fallback image
+        if (!grouped[areaName]) grouped[areaName] = [];
+        grouped[areaName].push(trail);
+      });
+
+      trailsByArea.value = grouped;
     } else if (data && typeof data === 'object') {
-      trailsByArea.value = data
+      trailsByArea.value = data;
     } else {
-      trailsByArea.value = {}
+      trailsByArea.value = {};
     }
 
-    console.log('Trails data structure:', trailsByArea.value)
+    console.log('Trails data structure:', trailsByArea.value);
 
-    // Scroll to area if URL query exists
+    // Set initial area filter from URL query
     if (route.query.area) {
-      const sectionId = route.query.area.toLowerCase()
+      const areaName = Object.keys(trailsByArea.value).find(
+        area => formatAnchorId(area) === formatAnchorId(route.query.area)
+      );
+      if (areaName) activeAreaFilter.value = areaName;
+    }
+
+    // Scroll to area section if query exists
+    if (route.query.area) {
+      const sectionId = formatAnchorId(route.query.area);
       setTimeout(() => {
-        const section = document.getElementById(sectionId)
+        const section = document.getElementById(sectionId);
         if (section) {
-          section.scrollIntoView({ behavior: 'smooth', block: 'start' })
-          section.classList.add('highlighted')
-          setTimeout(() => section.classList.remove('highlighted'), 1500)
+          section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          section.classList.add('highlighted');
+          setTimeout(() => section.classList.remove('highlighted'), 1500);
         }
-      }, 300)
+      }, 300);
     }
   } catch (error) {
-    console.error('Error fetching trails:', error)
-    trailsByArea.value = {}
+    console.error('Error fetching trails:', error);
+    trailsByArea.value = {};
   }
-})
+});
 </script>
 
 <style scoped>
