@@ -1,11 +1,7 @@
 <template>
  <div class="hike-container">
    <div class="hike-card">
-    <img 
-      :src="hike.image ? `https://into-the-land-backend.onrender.com${hike.image}` : ''" 
-      alt="Hike Image" 
-      class="hike-image" 
-    />
+    <img :src="hike.image" alt="Hike Image" class="hike-image" />
     <div class="hike-info">
       <h3>{{ hike.title }}</h3>
       <p>{{ hike.description }}</p>
