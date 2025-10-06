@@ -248,7 +248,7 @@ onMounted(async () => {
 
 async function loadAreas() {
   try {
-  const API_BASE = process.env.VUE_APP_API_BASE || 'http://localhost:4000/api';
+  const API_BASE = process.env.VUE_APP_API_BASE || 'https://into-the-land-backend.onrender.com/api';
     const response = await axios.get(`${API_BASE}/trails`);
     
     console.log('API Response:', response.data);
@@ -295,7 +295,7 @@ async function createBooking() {
   
   try {
     const token = localStorage.getItem('token');
-  const API_BASE = process.env.VUE_APP_API_BASE || 'http://localhost:4000/api';
+  const API_BASE = process.env.VUE_APP_API_BASE || 'https://into-the-land-backend.onrender.com/api';
     
     const bookingData = {
       trail_id: selectedTrail.value.id,
@@ -398,7 +398,7 @@ onBeforeUnmount(() => {
 
 
 <style scoped>
-/* Existing styles remain the same... */
+
 .book-trail-page {
   min-height: 100vh;
   background: #ffffff;
