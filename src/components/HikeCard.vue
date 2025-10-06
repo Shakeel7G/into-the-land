@@ -1,7 +1,12 @@
 <template>
  <div class="hike-container">
    <div class="hike-card">
-    <img :src="fullImageUrl" alt="Hike Image" class="hike-image" />
+    <img 
+      :src="getImageUrl(hike.image)" 
+      @error="handleError" 
+      alt="Hike Image" 
+      class="hike-image" 
+    />
     <div class="hike-info">
       <h3>{{ hike.title }}</h3>
       <p>{{ hike.description }}</p>
@@ -12,19 +17,23 @@
 </template>
 
 <script setup>
+const BACKEND_URL = 'https://into-the-land-backend.onrender.com'
+
 defineProps({
   hike: Object
 })
 
-// Backend URL
-const BACKEND_URL = 'https://into-the-land-backend.onrender.com'
+const defaultImage = '/default-image.jpg' // keep this in your public folder
 
-// Compute full image URL
-const fullImageUrl = computed(() => {
-  if (!hike.image) return ''         // fallback if no image
-  if (hike.image.startsWith('http')) return hike.image // already absolute
-  return `${BACKEND_URL}${hike.image}` // prepend backend URL
-})
+const getImageUrl = (imgPath) => {
+  if (!imgPath) return defaultImage
+  // If the path already has http(s), use it as is
+  return imgPath.startsWith('http') ? imgPath : `${BACKEND_URL}${imgPath}`
+}
+
+const handleError = (event) => {
+  event.target.src = defaultImage
+}
 </script>
 
 <style scoped>
