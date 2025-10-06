@@ -1,11 +1,11 @@
-<template>
+c<template>
   <div class="book-trail-page" ref="rootEl">
-    <!-- Scroll progress (pinned to top like Home/Pay/About) -->
+    <!-- Scroll progress -->
     <div class="scroll-progress">
       <div class="scroll-progress__bar" :style="{ width: scrollProgress + '%' }"></div>
     </div>
 
-    <!-- Login Required Message -->
+    <!-- Login Required -->
     <div v-if="!isLoggedIn" class="card scroll-reveal">
       <h2 class="title">Login Required</h2>
       <p>You must be logged in to book a trail.</p>
@@ -22,7 +22,7 @@
           <select v-model="selectedArea" @change="onAreaChange" required>
             <option disabled value="">Select an area</option>
             <option v-for="area in areas" :key="area.id" :value="area">
-              {{ area.name }} <!-- Use area.name instead of area.id -->
+              {{ area.name }}
             </option>
           </select>
         </label>
@@ -31,7 +31,9 @@
         <label class="scroll-reveal">Pick Trail
           <select v-model="selectedTrail" :disabled="!selectedArea" required>
             <option disabled value="">Select a trail</option>
-            <option v-for="trail in availableTrails" :key="trail.id" :value="trail">{{ trail.title }}</option>
+            <option v-for="trail in availableTrails" :key="trail.id" :value="trail">
+              {{ trail.title }}
+            </option>
           </select>
         </label>
 
@@ -98,7 +100,7 @@
           </select>
         </label>
 
-        <!-- Summary panel -->
+        <!-- Summary -->
         <div class="summary scroll-reveal">
           <h3>Final Cost</h3>
           <p>Petrol: R100 × {{ adults }} = R{{ 100 * adults }}</p>
@@ -147,40 +149,26 @@ const hikeAndBiteEnabled = ref(false);
 const hikeAndBiteCount = ref(0);
 const photography = ref("");
 
-// Data from API
+// API Data
 const areas = ref([]);
 const availableTrails = ref([]);
 const isSubmitting = ref(false);
 
-// Min date (today)
+// Min date
 const minDate = computed(() => {
   const today = new Date();
   return today.toISOString().split('T')[0];
 });
 
-// Totals
+// Total people
 const totalPeople = computed(() => adults.value + kids.value);
 
-watch([totalPeople, hikeAndBiteEnabled, adults], () => {
-  if (!hikeAndBiteEnabled.value) {
-    hikeAndBiteCount.value = 0;
-  } else {
-    if (hikeAndBiteCount.value === 0) {
-      hikeAndBiteCount.value = Math.min(adults.value, totalPeople.value);
-    }
-    if (hikeAndBiteCount.value > totalPeople.value) {
-      hikeAndBiteCount.value = totalPeople.value;
-    }
-    if (hikeAndBiteCount.value < 0) {
-      hikeAndBiteCount.value = 0;
-    }
-  }
-});
-
+// Hike & Bite cost
 const hikeAndBiteCost = computed(() =>
   hikeAndBiteEnabled.value ? hikeAndBiteCount.value * 70 : 0
 );
 
+// Photography cost
 const photographyCost = computed(() => {
   if (photography.value === "2") return 100;
   if (photography.value === "4") return 150;
@@ -195,96 +183,73 @@ const totalCost = computed(() =>
   photographyCost.value
 );
 
-// Load areas and check auth
-onMounted(async () => {
-  // Check authentication
-  const token = localStorage.getItem('token');
-  isLoggedIn.value = !!token;
-  
-  if (isLoggedIn.value) {
-    await loadAreas();
+// Watch for Hike & Bite adjustments
+watch([totalPeople, hikeAndBiteEnabled, adults], () => {
+  if (!hikeAndBiteEnabled.value) hikeAndBiteCount.value = 0;
+  if (hikeAndBiteCount.value > totalPeople.value) hikeAndBiteCount.value = totalPeople.value;
+  if (hikeAndBiteCount.value < 0) hikeAndBiteCount.value = 0;
+});
 
-    // Declare these only once
+// Load areas & trails dynamically
+async function loadAreasAndTrails() {
+  try {
+    const API_BASE = process.env.VUE_APP_API_BASE || 'https://into-the-land-backend.onrender.com/api';
+
+    // Fetch areas
+    const areasRes = await axios.get(`${API_BASE}/areas`);
+    const areasData = areasRes.data;
+
+    areas.value = areasData.map(a => ({ id: a.id, name: a.name, trails: [] }));
+
+    // Fetch trails
+    const trailsRes = await axios.get(`${API_BASE}/trails`);
+    const trailsData = trailsRes.data;
+
+    // Assign trails to areas
+    areas.value.forEach(area => {
+      area.trails = trailsData.filter(trail => trail.area_id === area.id);
+    });
+
+    // Handle preselection from query
     const trailIdParam = route.query.trail;
     const areaParam = route.query.area;
-    console.log('Looking for area:', areaParam, 'and trail:', trailIdParam);
 
     if (areaParam) {
-      // Find area by name (case-insensitive)
       const areaObj = areas.value.find(a => a.name.toLowerCase() === decodeURIComponent(areaParam).toLowerCase());
       if (areaObj) {
         selectedArea.value = areaObj;
         availableTrails.value = areaObj.trails;
+
         if (trailIdParam) {
-          // Find trail by id
           const trailObj = areaObj.trails.find(t => t.id == trailIdParam);
-          if (trailObj) {
-            selectedTrail.value = trailObj;
-          }
+          if (trailObj) selectedTrail.value = trailObj;
         }
       }
     } else if (trailIdParam) {
-      // If only trail is present, search all areas for the trail
-      let found = false;
       for (const areaObj of areas.value) {
         const trailObj = areaObj.trails.find(t => t.id == trailIdParam);
         if (trailObj) {
           selectedArea.value = areaObj;
           availableTrails.value = areaObj.trails;
           selectedTrail.value = trailObj;
-          found = true;
           break;
         }
       }
-      if (!found) {
-        console.log('Trail ID not found in any area');
-      }
     }
-  }
 
-  await nextTick();
-  setupScrollEffects();
-});
-
-async function loadAreas() {
-  try {
-  const API_BASE = process.env.VUE_APP_API_BASE || 'https://into-the-land-backend.onrender.com/api';
-    const response = await axios.get(`${API_BASE}/trails`);
-    
-    console.log('API Response:', response.data);
-    
-    // Hardcoded mapping of area names to IDs (based on your SQL data)
-    const areaIdMap = {
-      'Cape Town': 1,
-      'Stellenbosch': 2,
-      'Cederberg': 3,
-      'Overberg': 4,
-      'Drakensberg': 5
-    };
-    
-    if (typeof response.data === 'object' && response.data !== null) {
-      areas.value = Object.entries(response.data).map(([areaName, trails]) => {
-        return {
-          id: areaIdMap[areaName],
-          name: areaName,
-          trails: trails
-        };
-      });
-      
-      console.log('Processed areas:', areas.value);
-    }
-    
   } catch (error) {
-    console.error('Error loading areas:', error);
-    Swal.fire('Error', 'Failed to load areas', 'error');
+    console.error('Error loading areas or trails:', error);
+    Swal.fire('Error', 'Failed to load areas or trails', 'error');
   }
 }
 
+// Update available trails when area changes
 function onAreaChange() {
   selectedTrail.value = "";
   availableTrails.value = selectedArea.value ? selectedArea.value.trails : [];
 }
 
+// Create booking
 async function createBooking() {
   if (!selectedTrail.value || !date.value || !time.value) {
     Swal.fire('Error', 'Please fill in all required fields', 'error');
@@ -292,11 +257,11 @@ async function createBooking() {
   }
 
   isSubmitting.value = true;
-  
+
   try {
     const token = localStorage.getItem('token');
-  const API_BASE = process.env.VUE_APP_API_BASE || 'https://into-the-land-backend.onrender.com/api';
-    
+    const API_BASE = process.env.VUE_APP_API_BASE || 'https://into-the-land-backend.onrender.com/api';
+
     const bookingData = {
       trail_id: selectedTrail.value.id,
       hike_date: date.value,
@@ -309,13 +274,9 @@ async function createBooking() {
     };
 
     const response = await axios.post(`${API_BASE}/bookings`, bookingData, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      }
+      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
     });
 
-    // Store booking data for payment page
     const bookingForPayment = {
       booking_id: response.data.booking_id,
       area: selectedArea.value.name,
@@ -330,12 +291,9 @@ async function createBooking() {
       status: "pending"
     };
 
-    // Save for payment page
     localStorage.setItem("pendingPayment", JSON.stringify(bookingForPayment));
-
-    // Redirect to payment page
     router.push('/pay');
-    
+
   } catch (error) {
     console.error('Booking error:', error);
     Swal.fire('Error', error.response?.data?.message || 'Failed to create booking', 'error');
@@ -344,7 +302,7 @@ async function createBooking() {
   }
 }
 
-/* Scroll progress + reveal functions */
+// Scroll progress & reveal
 const rootEl = ref(null);
 const scrollProgress = ref(0);
 let _raf = null;
@@ -385,17 +343,23 @@ function setupScrollEffects() {
   updateScrollProgress();
 }
 
+onMounted(async () => {
+  const token = localStorage.getItem('token');
+  isLoggedIn.value = !!token;
+
+  if (isLoggedIn.value) {
+    await loadAreasAndTrails();
+    await nextTick();
+    setupScrollEffects();
+  }
+});
+
 onBeforeUnmount(() => {
   window.removeEventListener("scroll", onScroll);
   if (_raf) cancelAnimationFrame(_raf);
-  if (revealObserver) {
-    revealObserver.disconnect();
-    revealObserver = null;
-  }
+  if (revealObserver) revealObserver.disconnect();
 });
 </script>
-
-
 
 <style scoped>
 
