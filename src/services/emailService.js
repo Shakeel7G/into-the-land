@@ -12,7 +12,7 @@ const transporter = nodemailer.createTransport({
 });
 
 export const sendPasswordResetEmail = async (email, resetToken) => {
-  const resetLink = `${process.env.FRONTEND_URL || 'http://localhost:8080'}/reset-password?token=${resetToken}`;
+  const resetLink = `${process.env.FRONTEND_URL || 'http://into-the-land.netlify.app'}/reset-password?token=${resetToken}`;
   
   const mailOptions = {
     from: process.env.SMTP_FROM,
