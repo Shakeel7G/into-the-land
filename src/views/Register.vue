@@ -20,7 +20,7 @@ const surname = ref('')
 const email = ref('')
 const password = ref('')
 
-const API_BASE = process.env.VUE_APP_API_BASE || 'http://localhost:4000/api'
+const API_BASE = process.env.VUE_APP_API_BASE || 'https://into-the-land-backend.onrender.com/api'
 
 async function register() {
   try {
