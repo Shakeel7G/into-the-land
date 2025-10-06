@@ -70,6 +70,7 @@ const trailsByArea = ref({})
 const searchQuery = ref('')
 const activeAreaFilter = ref('all')
 const activeDifficultyFilter = ref('all')
+const backendURL = 'https://into-the-land-backend.onrender.com'
 
 // Format area name for URL anchor
 const formatAnchorId = (area) => {
@@ -129,7 +130,7 @@ const filteredTrails = computed(() => {
 
 onMounted(async () => {
   try {
-    const response = await axios.get(`https://into-the-land-backend.onrender.com/api/trails`)
+    const response = await axios.get(`${backendURL}/api/trails`)
     const data = response.data
 
     if (Array.isArray(data)) {
@@ -137,8 +138,9 @@ onMounted(async () => {
       data.forEach(trail => {
         const areaName = trail.area || trail.area_name || 'Unknown'
         if (!grouped[areaName]) grouped[areaName] = []
-        // Make sure image property is correct
-        trail.image = trail.image_url || trail.image || ''  
+
+        // Fix image URLs
+        trail.image = trail.image_url ? `${backendURL}${trail.image_url}` : trail.image || ''
         grouped[areaName].push(trail)
       })
       trailsByArea.value = grouped
@@ -147,6 +149,8 @@ onMounted(async () => {
     } else {
       trailsByArea.value = {}
     }
+
+    console.log('Trails data structure:', trailsByArea.value)
 
     // Scroll to area if URL query exists
     if (route.query.area) {
@@ -168,5 +172,210 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-/* your existing styles remain the same */
+.trails {
+  padding: 1rem;
+}
+
+.filter-controls {
+  margin-bottom: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(34, 139, 34, 0.15);
+}
+
+.search-box {
+  position: relative;
+  max-width: 400px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.search-input {
+  width: 100%;
+  padding: 0.85rem 1rem 0.85rem 3rem;
+  border: 1px solid #ced4da;
+  border-radius: 8px;
+  font-size: 1rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+  background-color: white;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #2c3e50;
+  box-shadow: 0 0 0 3px rgba(44, 62, 80, 0.15);
+}
+
+.search-icon {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #6c757d;
+}
+
+.filter-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+}
+
+.area-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.filter-btn {
+  padding: 0.6rem 1.2rem;
+  background-color: white;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 500;
+  color: #495057;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.filter-btn:hover {
+  background-color: #e9f5e9;
+  border-color: #228B22;
+  color: #228B22;
+  transform: translateY(-1px);
+}
+
+.filter-btn.active {
+  background-color: #228B22;
+  color: white;
+  border-color: #1c6b1c;
+  box-shadow: 0 2px 5px rgba(34, 139, 34, 0.3);
+}
+
+.difficulty-filters {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background-color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.difficulty-filters label {
+  font-weight: 600;
+  color: #2c3e50;
+  white-space: nowrap;
+}
+
+.difficulty-select {
+  padding: 0.6rem;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  background-color: white;
+  cursor: pointer;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+  min-width: 120px;
+}
+
+.difficulty-select:focus {
+  outline: none;
+  border-color: #2c3e50;
+  box-shadow: 0 0 0 2px rgba(44, 62, 80, 0.15);
+}
+
+.area-section {
+  margin-bottom: 3rem;
+  scroll-margin-top: 80px;
+}
+
+.area-section h3 {
+  color: #2c3e50;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #eee;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.trail-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.highlighted {
+  animation: highlight 1.5s ease;
+}
+
+@keyframes highlight {
+  from { background-color: rgba(22, 163, 74, 0.2); }
+  to { background-color: transparent; }
+}
+
+h2 {
+  text-align: center;
+  font-size: 2.5rem;
+  color: #2c3e50;
+  margin-bottom: 1.5rem;
+  font-weight: 700;
+}
+
+.no-results {
+  text-align: center;
+  padding: 2rem;
+  color: #6c757d;
+}
+
+.clear-filters-btn {
+  margin-top: 1rem;
+  padding: 0.75rem 1.5rem;
+  background-color: #228B22;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  font-weight: 600;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.clear-filters-btn:hover {
+  background-color: #1c6b1c;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+@media (max-width: 768px) {
+  .filter-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .area-filters {
+    justify-content: flex-start;
+    overflow-x: auto;
+    padding-bottom: 0.5rem;
+    margin-right: -0.5rem;
+  }
+  
+  .difficulty-filters {
+    justify-content: space-between;
+    padding: 0.75rem;
+  }
+  
+  .search-box {
+    max-width: 100%;
+  }
+}
 </style>
+
