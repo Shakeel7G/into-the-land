@@ -21,7 +21,7 @@ import api from '../services/api.js' // Use your Axios instance
 const route = useRoute()
 const trailId = route.params.id
 const trail = ref(null)
-const BACKEND_URL = process.env.VUE_APP_BACKEND_URL || 'http://localhost:4000';
+const BACKEND_URL = process.env.VUE_APP_BACKEND_URL || https://into-the-land-backend.onrender.com';
 // Fetch a single trail from the backend when the component is mounted
 onMounted(async () => {
   try {
