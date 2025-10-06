@@ -50,7 +50,7 @@ export default {
 
     const token = localStorage.getItem('token');
     try {
-  const res = await axios.get(process.env.VUE_APP_API_BASE || 'http://localhost:4000/api/bookings', {
+  const res = await axios.get(process.env.VUE_APP_API_BASE || 'https://into-the-land-backend.onrender.com/api/bookings', {
         headers: { Authorization: `Bearer ${token}` }
       });
       this.bookings = res.data;
