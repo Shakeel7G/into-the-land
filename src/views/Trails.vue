@@ -1,7 +1,7 @@
 <template>
   <div class="trails">
     <h2>Available Trails</h2>
-    
+
     <!-- Filter Controls -->
     <div class="filter-controls">
       <div class="search-box">
@@ -13,7 +13,7 @@
         />
         <span class="search-icon">🔍</span>
       </div>
-      
+
       <div class="filter-row">
         <div class="area-filters">
           <button 
@@ -31,20 +31,9 @@
             {{ area }}
           </button>
         </div>
-        
-        <!-- <div class="difficulty-filters">
-          <label>Difficulty:</label>
-          <select v-model="activeDifficultyFilter" class="difficulty-select">
-            <option value="all">All Levels</option>
-            <option value="Easy">Easy</option>
-            <option value="Moderate">Moderate</option>
-            <option value="Hard">Hard</option>
-            <option value="Expert">Expert</option>
-          </select>
-        </div> -->
       </div>
     </div>
-    
+
     <!-- Trails Display -->
     <div 
       v-for="(trails, area) in filteredTrails" 
@@ -61,7 +50,7 @@
         />
       </div>
     </div>
-    
+
     <!-- No results message -->
     <div v-if="Object.keys(filteredTrails).length === 0" class="no-results">
       <p>No trails found matching your search criteria.</p>
@@ -102,10 +91,10 @@ const clearFilters = () => {
   searchQuery.value = ''
 }
 
-// Compute filtered trails based on search, area filter, and difficulty filter
+// Compute filtered trails
 const filteredTrails = computed(() => {
   let result = {...trailsByArea.value}
-  
+
   // Apply area filter
   if (activeAreaFilter.value !== 'all') {
     const filtered = {}
@@ -114,39 +103,35 @@ const filteredTrails = computed(() => {
     }
     result = filtered
   }
-  
-  // Apply search and difficulty filters
+
   const searchLower = searchQuery.value.toLowerCase()
   const finalResult = {}
-  
+
   for (const area in result) {
     const filteredTrails = result[area].filter(trail => {
-      // Search filter
       const matchesSearch = !searchQuery.value || 
         trail.title.toLowerCase().includes(searchLower) ||
         (trail.description && trail.description.toLowerCase().includes(searchLower))
       
-      // Difficulty filter - ensure trail.difficulty exists and matches
       const matchesDifficulty = activeDifficultyFilter.value === 'all' || 
         (trail.difficulty && trail.difficulty.toLowerCase() === activeDifficultyFilter.value.toLowerCase())
       
       return matchesSearch && matchesDifficulty
     })
-    
+
     if (filteredTrails.length > 0) {
       finalResult[area] = filteredTrails
     }
   }
-  
+
   return finalResult
 })
 
 onMounted(async () => {
   try {
-  const response = await axios.get(`${process.env.VUE_APP_BACKEND_URL}/api/trails`)
+    const response = await axios.get(`https://into-the-land-backend.onrender.com/api/trails`)
     const data = response.data
 
-    // If backend returned a flat array, group by area into the same shape the template expects
     if (Array.isArray(data)) {
       const grouped = {}
       data.forEach(trail => {
@@ -161,38 +146,23 @@ onMounted(async () => {
       trailsByArea.value = {}
     }
 
-    // Debug: Log the structure to see if difficulty exists
     console.log('Trails data structure:', trailsByArea.value)
-    
-    // Set initial filter if area query parameter exists
+
+    // Scroll to area if URL query exists
     if (route.query.area) {
-      const areaName = Object.keys(trailsByArea.value).find(
-        area => formatAnchorId(area) === route.query.area
-      )
-      if (areaName) {
-        activeAreaFilter.value = areaName
-      }
-    }
-    
-    // Scroll to section if anchor exists in URL
-    if (route.query.area) {
-      const sectionId = route.query.area === 'cederberg' ? 'cederberg' : route.query.area
+      const sectionId = route.query.area.toLowerCase()
       setTimeout(() => {
         const section = document.getElementById(sectionId)
         if (section) {
-          section.scrollIntoView({ 
-            behavior: 'smooth',
-            block: 'start'
-          })
-          // Add temporary highlight
+          section.scrollIntoView({ behavior: 'smooth', block: 'start' })
           section.classList.add('highlighted')
           setTimeout(() => section.classList.remove('highlighted'), 1500)
         }
       }, 300)
     }
   } catch (error) {
-  console.error('Error fetching trails:', error)
-  trailsByArea.value = {}
+    console.error('Error fetching trails:', error)
+    trailsByArea.value = {}
   }
 })
 </script>
