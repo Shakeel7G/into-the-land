@@ -89,7 +89,7 @@ const resetPassword = async () => {
 
   isResetting.value = true
   try {
-  const API_BASE = process.env.VUE_APP_API_BASE || 'http://localhost:4000/api'
+  const API_BASE = process.env.VUE_APP_API_BASE || 'https://into-the-land-backend.onrender.com/api'
     await axios.post(`${API_BASE}/reset-password`, {
       token: token,
       password: newPassword.value
