@@ -27,7 +27,6 @@
         <span class="chevron"></span>
       </a>
     </section>
-    
 
     <!-- SCROLL GALLERY -->
     <section id="gallery" class="section">
@@ -37,8 +36,8 @@
         </div>
         <ScrollScenes 
           v-else
-          :images="homeData.scrollImages" 
-          :captions="homeData.scrollCaptions"
+          :images="homeData.scrollImages || []" 
+          :captions="homeData.scrollCaptions || []"
         />
       </div>
     </section>
@@ -54,7 +53,7 @@
         <div class="features">
           <article 
             class="feature scroll-reveal" 
-            v-for="feature in homeData.features" 
+            v-for="feature in homeData.features || []" 
             :key="feature.title"
           >
             <img 
@@ -89,7 +88,7 @@
       <div class="container stats-grid">
         <div 
           class="stat scroll-reveal" 
-          v-for="stat in homeData.stats" 
+          v-for="stat in homeData.stats || []" 
           :key="stat.label"
         >
           <div class="num">{{ stat.value }}</div>
@@ -107,38 +106,37 @@
         </div>
 
         <div class="cards">
-  <article 
-    class="card scroll-reveal" 
-    v-for="(imgUrl, index) in homeData.scrollImages.slice(0, 3)" 
-    :key="index"
-  >
-    <img 
-      :src="imgUrl" 
-      :alt="homeData.scrollCaptions[index]?.title || 'Hike image'" 
-      class="card-image"
-    />
-    <div class="card-body">
-      <div>
-        <h3>{{ homeData.scrollCaptions[index]?.title || 'Featured Trail' }}</h3>
-        <p class="muted">{{ homeData.scrollCaptions[index]?.text || 'Explore this beautiful trail' }}</p>
-      </div>
-      <router-link 
-        :to="{
-          path: '/trails',
-          query: { 
-            area: index === 1 ? 'cederberg' : formatAnchorId(homeData.scrollCaptions[index]?.title) 
-          }
-        }" 
-        class="btn btn-sm"
-      >
-        View
-      </router-link>
-    </div>
-  </article>
-</div>
+          <article 
+            class="card scroll-reveal" 
+            v-for="(imgUrl, index) in (homeData.scrollImages || []).slice(0, 3)" 
+            :key="index"
+          >
+            <img 
+              :src="imgUrl" 
+              :alt="homeData.scrollCaptions?.[index]?.title || 'Hike image'" 
+              class="card-image"
+            />
+            <div class="card-body">
+              <div>
+                <h3>{{ homeData.scrollCaptions?.[index]?.title || 'Featured Trail' }}</h3>
+                <p class="muted">{{ homeData.scrollCaptions?.[index]?.text || 'Explore this beautiful trail' }}</p>
+              </div>
+              <router-link 
+                :to="{
+                  path: '/trails',
+                  query: { 
+                    area: index === 1 ? 'cederberg' : formatAnchorId(homeData.scrollCaptions?.[index]?.title) 
+                  }
+                }" 
+                class="btn btn-sm"
+              >
+                View
+              </router-link>
+            </div>
+          </article>
+        </div>
       </div>
     </section>
-
 
     <!-- CTA SECTION -->
     <section class="cta-strip">
@@ -154,7 +152,7 @@
 import { ref, onMounted, onBeforeUnmount } from "vue";
 import ScrollScenes from "@/components/ScrollScenes.vue";
 import axios from 'axios';
-import { useRouter } from 'vue-router';
+
 const rootEl = ref(null);
 const scrollProgress = ref(0);
 const isLoading = ref(true);
@@ -175,41 +173,36 @@ const formatAnchorId = (title) => {
 let _raf = null;
 let revealObserver = null;
 
-const getAreaFromTitle = (title) => {
-  if (!title) return 'all';
-  return encodeURIComponent(title.split(' ')[0]);
-};
-
 const fetchHomeData = async () => {
   try {
     isLoading.value = true;
-    const response = await axios.get('/api/trails');
-    homeData.value = response.data;
-  } catch (error) {
-    console.error("Error fetching home data:", error);
-    homeData.value = {
-      scrollImages: [
-       (process.env.VUE_APP_BACKEND_URL || 'https://into-the-land-backend.onrender.com') + '/images/table-mountain.jpg',
-      (process.env.VUE_APP_BACKEND_URL || 'https://into-the-land-backend.onrender.com') + '/images/drakensberg.jpg',
-        (process.env.VUE_APP_BACKEND_URL || 'https://into-the-land-backend.onrender.com') + '/images/cederberg.jpg'
-      ],
-      scrollCaptions: [
-        { title: 'Table Mountain', text: 'Iconic routes and skyline views over Cape Town...' },
-        { title: 'Cederberg Wilderness', text: 'Sandstone arches, hidden pools, and orange sunsets...' },
-        { title: 'Drakensberg', text: 'Basalt peaks, green valleys, and epic passes...' }
-      ],
-      features: [
-        { title: 'Accurate Trails', description: 'Hand-curated routes with distances and elevation' },
-        { title: 'Live Position', description: 'See your exact location on the trail' },
-        { title: 'Offline Ready', description: 'Download areas and hike anywhere' },
-        { title: 'Emergency Info', description: 'Local contacts when it matters most' }
-      ],
-      stats: [
-        { value: '6000+ km', label: 'Trails mapped' },
-        { value: '50+', label: 'Areas covered' },
-        { value: 'Nationwide', label: 'Coverage' }
-      ]
-    };
+    const backendUrl = process.env.VUE_APP_BACKEND_URL || 'https://into-the-land-backend.onrender.com';
+    const response = await axios.get(`${backendUrl}/api/trails`);
+    const data = response.data || {};
+
+    homeData.value.scrollImages = data.scrollImages || [
+      `${backendUrl}/images/table-mountain.jpg`,
+      `${backendUrl}/images/drakensberg.jpg`,
+      `${backendUrl}/images/cederberg.jpg`
+    ];
+    homeData.value.scrollCaptions = data.scrollCaptions || [
+      { title: 'Table Mountain', text: 'Iconic routes and skyline views over Cape Town...' },
+      { title: 'Cederberg Wilderness', text: 'Sandstone arches, hidden pools, and orange sunsets...' },
+      { title: 'Drakensberg', text: 'Basalt peaks, green valleys, and epic passes...' }
+    ];
+    homeData.value.features = data.features || [
+      { title: 'Accurate Trails', description: 'Hand-curated routes with distances and elevation' },
+      { title: 'Live Position', description: 'See your exact location on the trail' },
+      { title: 'Offline Ready', description: 'Download areas and hike anywhere' },
+      { title: 'Emergency Info', description: 'Local contacts when it matters most' }
+    ];
+    homeData.value.stats = data.stats || [
+      { value: '6000+ km', label: 'Trails mapped' },
+      { value: '50+', label: 'Areas covered' },
+      { value: 'Nationwide', label: 'Coverage' }
+    ];
+  } catch (err) {
+    console.error("Error fetching home data:", err);
   } finally {
     isLoading.value = false;
   }
