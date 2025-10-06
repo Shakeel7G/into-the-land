@@ -220,7 +220,7 @@ const isLoggedIn = ref(false)
 const userName = ref('')
 const userEmail = ref('')
 const userRole = ref('customer')
-const profilePic = ref((process.env.VUE_APP_BACKEND_URL || 'http://localhost:4000') + '/images/profilePic.png')
+const profilePic = ref((process.env.VUE_APP_BACKEND_URL || 'https://into-the-land-backend.onrender.com') + '/images/profilePic.png')
 
 // Booking data
 const allBookings = ref([])
@@ -300,7 +300,7 @@ onMounted(async () => {
 async function login() {
   isSubmitting.value = true
   try {
-  const API_BASE = process.env.VUE_APP_API_BASE || 'http://localhost:4000/api'
+  const API_BASE = process.env.VUE_APP_API_BASE || 'https://into-the-land-backend.onrender.com/api'
     const response = await axios.post(`${API_BASE}/login`, {
       email: email.value,
       password: password.value
@@ -345,7 +345,7 @@ async function login() {
 async function register() {
   isSubmitting.value = true
   try {
-  const API_BASE = process.env.VUE_APP_API_BASE || 'http://localhost:4000/api'
+  const API_BASE = process.env.VUE_APP_API_BASE || 'https://into-the-land-backend.onrender.com/api'
     await axios.post(`${API_BASE}/register`, {
       name: name.value,
       surname: surname.value,
@@ -367,7 +367,7 @@ async function register() {
 async function loadBookings() {
   try {
     const token = localStorage.getItem('token')
-  const API_BASE = process.env.VUE_APP_API_BASE || 'http://localhost:4000/api'
+  const API_BASE = process.env.VUE_APP_API_BASE || 'https://into-the-land-backend.onrender.com/api'
     
     let endpoint = userRole.value === 'admin' ? '/bookings' : '/bookings/my'
     
@@ -387,7 +387,7 @@ async function loadBookings() {
 async function cancelBooking(booking) {
   try {
     const token = localStorage.getItem('token')
-  const API_BASE = process.env.VUE_APP_API_BASE || 'http://localhost:4000/api'
+  const API_BASE = process.env.VUE_APP_API_BASE || 'https://into-the-land-backend.onrender.com/api'
     
     const result = await Swal.fire({
       title: 'Are you sure?',
