@@ -1,20 +1,20 @@
 <template>
- <div class="hike-container">
-   <div class="hike-card">
-    <img :src="hike.image" alt="Hike Image" class="hike-image" />
-    <div class="hike-info">
-      <h3>{{ hike.title }}</h3>
-      <p>{{ hike.description }}</p>
-      <router-link :to="`/trail/${hike.id}`" class="details-link">View Details</router-link>
+  <div class="hike-container">
+    <div class="hike-card">
+      <img :src="hike.image" alt="Hike Image" class="hike-image" />
+      <div class="hike-info">
+        <h3>{{ hike.title }}</h3>
+        <p>{{ hike.description }}</p>
+        <router-link :to="`/trail/${hike.id}`" class="details-link">View Details</router-link>
+      </div>
     </div>
   </div>
- </div>
 </template>
 
 <script setup>
 defineProps({
   hike: Object
-});
+})
 </script>
 
 <style scoped>
