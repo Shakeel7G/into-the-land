@@ -24,7 +24,7 @@ const API_BASE = process.env.VUE_APP_API_BASE || 'https://into-the-land-backend.
 
 async function register() {
   try {
-    const response = await api.post(`${API_BASE}/register`, {
+    const response = await api.post(`${API_BASE}api/auth/register`, {
 
     })
     alert('Registration successful! Please login.')
