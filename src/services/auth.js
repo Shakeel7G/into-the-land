@@ -8,6 +8,6 @@ export const registerUser = (userData) => {
 
 // Login user
 export const loginUser = (credentials) => {
-  return api.post('/login', credentials);
+  return api.post('/auth/login', credentials);
 };
 
