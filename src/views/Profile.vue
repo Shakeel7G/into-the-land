@@ -346,7 +346,7 @@ async function register() {
   isSubmitting.value = true
   try {
   const API_BASE = process.env.VUE_APP_API_BASE || 'https://into-the-land-backend.onrender.com/api'
-    await axios.post(`${API_BASE}/register`, {
+    await axios.post(`${API_BASE}/auth/register`, {
       name: name.value,
       surname: surname.value,
       email: email.value,
