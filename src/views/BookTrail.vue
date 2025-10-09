@@ -1,4 +1,4 @@
-c<template>
+<template>
   <div class="book-trail-page" ref="rootEl">
     <!-- Scroll progress -->
     <div class="scroll-progress">
@@ -21,9 +21,7 @@ c<template>
         <label class="scroll-reveal">Pick Area
           <select v-model="selectedArea" @change="onAreaChange" required>
             <option disabled value="">Select an area</option>
-            <option v-for="area in areas" :key="area.id" :value="area">
-              {{ area.name }}
-            </option>
+            <option v-for="area in areas" :key="area.id" :value="area">{{ area.name }}</option>
           </select>
         </label>
 
@@ -31,18 +29,15 @@ c<template>
         <label class="scroll-reveal">Pick Trail
           <select v-model="selectedTrail" :disabled="!selectedArea" required>
             <option disabled value="">Select a trail</option>
-            <option v-for="trail in availableTrails" :key="trail.id" :value="trail">
-              {{ trail.title }}
-            </option>
+            <option v-for="trail in availableTrails" :key="trail.id" :value="trail">{{ trail.title }}</option>
           </select>
         </label>
 
-        <!-- Two-column grid rows -->
+        <!-- People -->
         <div class="row">
           <label class="mini scroll-reveal">Adults
             <input type="number" v-model.number="adults" min="1" required />
           </label>
-
           <label class="mini scroll-reveal">Kids under 12 (free)
             <input type="number" v-model.number="kids" min="0" />
           </label>
@@ -52,7 +47,6 @@ c<template>
           <label class="mini scroll-reveal">Select Date
             <input type="date" v-model="date" :min="minDate" required />
           </label>
-
           <label class="mini scroll-reveal">Time of Hike
             <select v-model="time" required>
               <option disabled value="">Select time</option>
@@ -63,7 +57,7 @@ c<template>
           </label>
         </div>
 
-        <!-- Hike & Bite -->
+        <!-- Addons -->
         <div class="addon-box scroll-reveal">
           <div class="row">
             <label class="mini">
@@ -91,7 +85,6 @@ c<template>
           </div>
         </div>
 
-        <!-- Photography -->
         <label class="scroll-reveal">Photography Option
           <select v-model="photography">
             <option value="">None</option>
@@ -127,10 +120,9 @@ c<template>
 
 <script setup>
 import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from "vue";
-import { useRouter, useRoute } from 'vue-router';
-import axios from 'axios';
+import { useRouter, useRoute } from "vue-router";
+import axios from "axios";
 import Swal from "sweetalert2";
-import "sweetalert2/dist/sweetalert2.min.css";
 
 const router = useRouter();
 const route = useRoute();
@@ -155,75 +147,43 @@ const availableTrails = ref([]);
 const isSubmitting = ref(false);
 
 // Min date
-const minDate = computed(() => {
-  const today = new Date();
-  return today.toISOString().split('T')[0];
-});
+const minDate = computed(() => new Date().toISOString().split("T")[0]);
 
 // Total people
 const totalPeople = computed(() => adults.value + kids.value);
 
-// Hike & Bite cost
-const hikeAndBiteCost = computed(() =>
-  hikeAndBiteEnabled.value ? hikeAndBiteCount.value * 70 : 0
-);
-
-// Photography cost
-const photographyCost = computed(() => {
-  if (photography.value === "2") return 100;
-  if (photography.value === "4") return 150;
-  return 0;
-});
-
+// Costs
+const hikeAndBiteCost = computed(() => (hikeAndBiteEnabled.value ? hikeAndBiteCount.value * 70 : 0));
+const photographyCost = computed(() => (photography.value === "2" ? 100 : photography.value === "4" ? 150 : 0));
 const baseCostPerAdult = 100 + 500 + 150;
+const totalCost = computed(() => adults.value * baseCostPerAdult + hikeAndBiteCost.value + photographyCost.value);
 
-const totalCost = computed(() =>
-  adults.value * baseCostPerAdult +
-  hikeAndBiteCost.value +
-  photographyCost.value
-);
-
-// Watch for Hike & Bite adjustments
+// Watch Hike & Bite count
 watch([totalPeople, hikeAndBiteEnabled, adults], () => {
   if (!hikeAndBiteEnabled.value) hikeAndBiteCount.value = 0;
   if (hikeAndBiteCount.value > totalPeople.value) hikeAndBiteCount.value = totalPeople.value;
   if (hikeAndBiteCount.value < 0) hikeAndBiteCount.value = 0;
 });
 
-// Load areas & trails dynamically
+// Load areas & trails
 async function loadAreasAndTrails() {
   try {
-    const API_BASE = process.env.VUE_APP_API_BASE || 'https://into-the-land-backend.onrender.com/api';
-
-    // Fetch areas
+    const API_BASE = process.env.VUE_APP_API_BASE || "https://into-the-land-backend.onrender.com/api";
     const areasRes = await axios.get(`${API_BASE}/areas`);
-    const areasData = areasRes.data;
-
-    areas.value = areasData.map(a => ({ id: a.id, name: a.name, trails: [] }));
-
-    // Fetch trails
+    areas.value = areasRes.data.map(a => ({ id: a.id, name: a.name, trails: [] }));
     const trailsRes = await axios.get(`${API_BASE}/trails`);
     const trailsData = trailsRes.data;
+    areas.value.forEach(area => { area.trails = trailsData.filter(t => t.area_id === area.id); });
 
-    // Assign trails to areas
-    areas.value.forEach(area => {
-      area.trails = trailsData.filter(trail => trail.area_id === area.id);
-    });
-
-    // Handle preselection from query
+    // Preselect from query
     const trailIdParam = route.query.trail;
     const areaParam = route.query.area;
-
     if (areaParam) {
       const areaObj = areas.value.find(a => a.name.toLowerCase() === decodeURIComponent(areaParam).toLowerCase());
       if (areaObj) {
         selectedArea.value = areaObj;
         availableTrails.value = areaObj.trails;
-
-        if (trailIdParam) {
-          const trailObj = areaObj.trails.find(t => t.id == trailIdParam);
-          if (trailObj) selectedTrail.value = trailObj;
-        }
+        if (trailIdParam) selectedTrail.value = areaObj.trails.find(t => t.id == trailIdParam) || "";
       }
     } else if (trailIdParam) {
       for (const areaObj of areas.value) {
@@ -236,14 +196,12 @@ async function loadAreasAndTrails() {
         }
       }
     }
-
   } catch (error) {
-    console.error('Error loading areas or trails:', error);
-    Swal.fire('Error', 'Failed to load areas or trails', 'error');
+    console.error(error);
+    Swal.fire("Error", "Failed to load areas or trails", "error");
   }
 }
 
-// Update available trails when area changes
 function onAreaChange() {
   selectedTrail.value = "";
   availableTrails.value = selectedArea.value ? selectedArea.value.trails : [];
@@ -252,16 +210,13 @@ function onAreaChange() {
 // Create booking
 async function createBooking() {
   if (!selectedTrail.value || !date.value || !time.value) {
-    Swal.fire('Error', 'Please fill in all required fields', 'error');
+    Swal.fire("Error", "Please fill in all required fields", "error");
     return;
   }
-
   isSubmitting.value = true;
-
   try {
-    const token = localStorage.getItem('token');
-    const API_BASE = process.env.VUE_APP_API_BASE || 'https://into-the-land-backend.onrender.com/api';
-
+    const token = localStorage.getItem("token");
+    const API_BASE = process.env.VUE_APP_API_BASE || "https://into-the-land-backend.onrender.com/api";
     const bookingData = {
       trail_id: selectedTrail.value.id,
       hike_date: date.value,
@@ -272,13 +227,12 @@ async function createBooking() {
       photography_option: photography.value || null,
       total_price: totalCost.value
     };
-
-    const response = await axios.post(`${API_BASE}/bookings`, bookingData, {
-      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
+    const res = await axios.post(`${API_BASE}/bookings`, bookingData, {
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }
     });
 
     const bookingForPayment = {
-      booking_id: response.data.booking_id,
+      booking_id: res.data.booking_id,
       area: selectedArea.value.name,
       trail: selectedTrail.value.title,
       date: date.value,
@@ -292,17 +246,16 @@ async function createBooking() {
     };
 
     localStorage.setItem("pendingPayment", JSON.stringify(bookingForPayment));
-    router.push('/pay');
-
+    router.push("/pay");
   } catch (error) {
-    console.error('Booking error:', error);
-    Swal.fire('Error', error.response?.data?.message || 'Failed to create booking', 'error');
+    console.error("Booking error:", error);
+    Swal.fire("Error", error.response?.data?.message || "Failed to create booking", "error");
   } finally {
     isSubmitting.value = false;
   }
 }
 
-// Scroll progress & reveal
+// Scroll & reveal
 const rootEl = ref(null);
 const scrollProgress = ref(0);
 let _raf = null;
@@ -313,24 +266,13 @@ function updateScrollProgress() {
   const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
   scrollProgress.value = height > 0 ? Math.min(100, (scrollTop / height) * 100) : 0;
 }
-
-const onScroll = () => {
-  if (_raf) return;
-  _raf = requestAnimationFrame(() => {
-    updateScrollProgress();
-    _raf = null;
-  });
-};
+const onScroll = () => { if (_raf) return; _raf = requestAnimationFrame(() => { updateScrollProgress(); _raf = null; }); };
 
 function revealInitialInView() {
   const els = rootEl.value?.querySelectorAll(".scroll-reveal") || [];
   const vh = window.innerHeight || document.documentElement.clientHeight;
-  els.forEach(el => {
-    const r = el.getBoundingClientRect();
-    if (r.top < vh * 0.9 && r.bottom > 0) el.classList.add("visible");
-  });
+  els.forEach(el => { const r = el.getBoundingClientRect(); if (r.top < vh * 0.9 && r.bottom > 0) el.classList.add("visible"); });
 }
-
 function setupScrollEffects() {
   revealObserver = new IntersectionObserver(
     (entries) => entries.forEach(e => { if (e.isIntersecting) e.target.classList.add("visible"); }),
@@ -338,15 +280,13 @@ function setupScrollEffects() {
   );
   rootEl.value?.querySelectorAll(".scroll-reveal").forEach(el => revealObserver.observe(el));
   revealInitialInView();
-
   window.addEventListener("scroll", onScroll, { passive: true });
   updateScrollProgress();
 }
 
 onMounted(async () => {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem("token");
   isLoggedIn.value = !!token;
-
   if (isLoggedIn.value) {
     await loadAreasAndTrails();
     await nextTick();
@@ -360,118 +300,3 @@ onBeforeUnmount(() => {
   if (revealObserver) revealObserver.disconnect();
 });
 </script>
-
-<style scoped>
-
-.book-trail-page {
-  min-height: 100vh;
-  background: #ffffff;
-  display: grid;
-  place-items: center;
-  padding: 2rem 1rem 3rem;
-  position: relative;
-}
-
-.scroll-progress {
-  position: fixed;
-  top: 0;
-  left: 0;
-  height: 4px;
-  width: 100%;
-  z-index: 100;
-}
-.scroll-progress__bar {
-  height: 100%;
-  width: 0%;
-  background: linear-gradient(90deg, #16a34a, #22c55e);
-  transition: width .1s linear;
-}
-
-.card {
-  width: min(760px, 94vw);
-  background: #ffffff;
-  color: #111827;
-  border: 1px solid #e5e7eb;
-  border-radius: 16px;
-  padding: 1.25rem 1.25rem 1.5rem;
-  box-shadow: 0 10px 24px rgba(0,0,0,.06);
-}
-
-.title { margin: 0 0 .9rem; color:#0f172a; }
-
-.form { display: flex; flex-direction: column; }
-label { display:block; font-weight:600; margin:.65rem 0 .35rem; color:#0f172a; }
-input, select {
-  width:100%;
-  padding:.7rem .85rem;
-  border-radius:10px;
-  border:1px solid #e5e7eb;
-  background:#ffffff;
-  color:#0f172a;
-  outline:none;
-  transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease;
-  box-sizing: border-box;
-  max-width: 100%;
-}
-input::placeholder { color:#94a3b8; }
-input:focus, select:focus {
-  border-color:#16a34a;
-  box-shadow: 0 0 0 2px rgba(22,163,74,.15);
-  transform: translateY(-1px);
-}
-
-.checkbox {
-  display: inline-flex;
-  align-items: center;
-  gap: .55rem;
-  user-select: none;
-}
-.checkbox input { width:auto; transform: translateY(1px); }
-
-.muted { color:#6b7280; }
-.disabled { opacity:.6; pointer-events:none; }
-
-.row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 1rem;
-}
-.row > * { min-width: 0; }
-.mini { display: flex; flex-direction: column; gap: .35rem; }
-
-@media (max-width: 680px) {
-  .row { grid-template-columns: 1fr; }
-}
-
-.addon-box {
-  background:#f8fafc;
-  border:1px solid #e5e7eb;
-  border-radius:12px;
-  padding: .75rem .9rem;
-  margin: .6rem 0 .2rem;
-}
-
-.summary {
-  background:#f8fafc;
-  border:1px solid #e5e7eb;
-  border-radius:12px;
-  padding:1rem;
-  margin-top:1rem;
-}
-.summary h3 { margin: 0 0 .35rem; color:#0f172a; }
-.summary p { margin:.25rem 0; color:#334155; }
-
-.btn {
-  display:inline-block; padding:.9rem 1.1rem; border-radius:10px; border:1px solid transparent; text-decoration:none; font-weight:800;
-  background:#16a34a; color:#fff; margin-top:1rem;
-  transition: transform .15s ease, background .2s ease, box-shadow .2s ease;
-  width: 100%;
-  text-align: center;
-  cursor: pointer;
-}
-.btn:hover { background:#15803d; transform: translateY(-1px); }
-.btn:disabled { background:#94a3b8; cursor: not-allowed; transform: none; }
-
-.scroll-reveal { opacity: 0; transform: translateY(18px); transition: transform .6s ease, opacity .6s ease; }
-.scroll-reveal.visible { opacity: 1; transform: translateY(0); }
-</style>
