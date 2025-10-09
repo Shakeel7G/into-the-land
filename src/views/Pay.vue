@@ -24,46 +24,44 @@
 </template>
 
 <script>
-import api from "@/services/api";
+import { ref } from "vue";
+import api from "@/services/api.js";
 
 export default {
   name: "Pay",
-  data() {
-    return {
-      booking: null,
-      paymentMethod: "",
-      message: "",
-    };
-  },
-  async mounted() {
-    // Get booking data from route params (or local storage)
-    const storedBooking = localStorage.getItem("currentBooking");
-    if (storedBooking) {
-      this.booking = JSON.parse(storedBooking);
-    } else {
-      this.message = "No booking found. Please book a trail first.";
-    }
-  },
-  methods: {
-    async makePayment() {
+  setup() {
+    const bookingId = ref(null);
+    const amount = ref(0);
+    const paymentMethod = ref("card");
+    const isLoading = ref(false);
+    const message = ref("");
+
+    // Example: receive booking data via route or props
+    // Make sure your router passes booking_id and amount via route params or state
+    const route = useRoute();
+    bookingId.value = route.query.booking_id;
+    amount.value = route.query.amount;
+
+    // Get token
+    const token = localStorage.getItem("token");
+
+    const handlePayment = async () => {
+      if (!bookingId.value || !amount.value) {
+        message.value = "Missing booking or payment info.";
+        return;
+      }
+
+      isLoading.value = true;
+      message.value = "";
+
       try {
-        if (!this.paymentMethod) {
-          this.message = "Please select a payment method.";
-          return;
-        }
-
-        const token = localStorage.getItem("token");
-        if (!token) {
-          this.message = "You must be logged in to make a payment.";
-          return;
-        }
-
-        const response = await api.post(
+        const res = await api.post(
           "/payments",
           {
-            booking_id: this.booking.id,
-            amount: this.booking.total_price,
-            payment_method: this.paymentMethod,
+            booking_id: bookingId.value,
+            amount: amount.value,
+            payment_method: paymentMethod.value,
+            payment_status: "completed", // default for now
           },
           {
             headers: {
@@ -72,21 +70,24 @@ export default {
           }
         );
 
-        this.message = "✅ Payment successful!";
-        console.log("Payment response:", response.data);
-
-        // Update booking status locally
-        localStorage.removeItem("currentBooking");
-
-        // Optional: redirect to confirmation page
-        this.$router.push("/confirmation");
+        console.log("Payment success:", res.data);
+        message.value = "✅ Payment processed successfully!";
       } catch (err) {
         console.error("Payment error:", err);
-        this.message =
-          err.response?.data?.message ||
-          "Payment failed. Please try again later.";
+        message.value = "❌ Payment failed. Please try again.";
+      } finally {
+        isLoading.value = false;
       }
-    },
+    };
+
+    return {
+      bookingId,
+      amount,
+      paymentMethod,
+      isLoading,
+      message,
+      handlePayment,
+    };
   },
 };
 </script>
