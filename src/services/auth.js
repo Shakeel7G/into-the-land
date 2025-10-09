@@ -3,7 +3,7 @@ import api from './api.js';
 
 // Register new user
 export const registerUser = (userData) => {
-  return api.post('/register', userData);
+  return api.post('/auth/register', userData);
 };
 
 // Login user
