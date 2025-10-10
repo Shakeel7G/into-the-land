@@ -15,76 +15,21 @@ import PrivacyPolicy from '@/views/PrivacyPolicy.vue'
 import TermsAndConditions from '@/views/TermsAndConditions.vue'
 import ResetPassword from '@/views/ResetPassword.vue'
 
-
-
 const routes = [
-  {
-    path: '/',
-    name: 'Home',
-    component: Home
-  },
-  {
-    path: '/trails',
-    name: 'Trails',
-    component: Trails
-  },
-  {
-    path: '/trail/:id',
-    name: 'TrailDetails',
-    component: TrailDetails,
-    props: true
-  },
-  {
-    path: '/book',
-    name: 'BookTrail',
-    component: BookTrail,
-    meta: { requiresAuth: true } //  This route now requires login
-  },
-  {
-    path: '/profile',
-    name: 'Profile',
-    component: Profile
-  },
-  {
-    path: '/register',
-    name: 'Register',
-    component: Register
-  },
-  {
-    path: '/about',
-    name: 'About',
-    component: About
-  },
-   {
-    path: '/pay',
-    name: 'Pay',
-    component: Pay
-  },
-  {
-      path: '/privacy',
-    name: 'PrivacyPolicy',
-    component: PrivacyPolicy
-  },
-  {
-    path: '/terms',
-    name: 'TermsAndConditions',
-    component: TermsAndConditions
-  },
-  {
-    path: '/contact',
-    name: 'ContactUs',
-    component: ContactUs    
-  },
-
-    {
-    path: '/reset-password',
-    name: 'ResetPassword',
-    component: ResetPassword
-  },
-
-  // Apple Pay mock and return handler
+  { path: '/', name: 'Home', component: Home },
+  { path: '/trails', name: 'Trails', component: Trails },
+  { path: '/trail/:id', name: 'TrailDetails', component: TrailDetails, props: true },
+  { path: '/book', name: 'BookTrail', component: BookTrail, meta: { requiresAuth: true } },
+  { path: '/profile', name: 'Profile', component: Profile },
+  { path: '/register', name: 'Register', component: Register },
+  { path: '/about', name: 'About', component: About },
+  { path: '/pay', name: 'Pay', component: Pay },
+  { path: '/privacy', name: 'PrivacyPolicy', component: PrivacyPolicy },
+  { path: '/terms', name: 'TermsAndConditions', component: TermsAndConditions },
+  { path: '/contact', name: 'ContactUs', component: ContactUs },
+  { path: '/reset-password', name: 'ResetPassword', component: ResetPassword },
   { path: '/fake-apple-pay', name: 'FakeApplePay', component: FakeApplePay },
-  { path: '/pay/return', name: 'PayReturn', component: PayReturn },
+  { path: '/pay/return', name: 'PayReturn', component: PayReturn }
 ]
 
 const router = createRouter({
@@ -92,11 +37,11 @@ const router = createRouter({
   routes
 })
 
-//  Global navigation guard
+// Global navigation guard
 router.beforeEach((to, from, next) => {
-  const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true'
+  const token = localStorage.getItem('token')
 
-  if (to.meta.requiresAuth && !isLoggedIn) {
+  if (to.meta.requiresAuth && !token) {
     next('/profile') // redirect to login/profile page
   } else {
     next()
