@@ -1,100 +1,145 @@
 <template>
   <div class="pay-page">
-    <div class="card">
-      <h2 class="title">Payment</h2>
+    <h2>Complete Your Payment</h2>
 
-      <div v-if="!booking">
-        <p>No pending booking found. Please go back and book a trail first.</p>
-        <button class="btn btn-primary" @click="$router.push('/book-trail')">Book Now</button>
-      </div>
+    <div v-if="!booking">
+      <p>Loading booking...</p>
+    </div>
 
-      <div v-else>
-        <p><strong>Trail:</strong> {{ booking.trail }}</p>
-        <p><strong>Area:</strong> {{ booking.area }}</p>
-        <p><strong>Date:</strong> {{ booking.date }}</p>
-        <p><strong>Time:</strong> {{ booking.time }}</p>
-        <p><strong>Adults:</strong> {{ booking.adults }}</p>
-        <p><strong>Kids:</strong> {{ booking.kids }}</p>
-        <p v-if="booking.hikeAndBite">Hike & Bite: {{ booking.hikeAndBite }}</p>
-        <p v-if="booking.photography">Photography: {{ booking.photography }}</p>
-        <hr />
-        <p><strong>Total:</strong> R{{ booking.totalCost }}</p>
+    <div v-else class="booking-summary">
+      <h3>{{ booking.trail }}</h3>
+      <p>Date: {{ booking.hike_date }}</p>
+      <p>Time: {{ booking.hike_time || '09:00' }}</p>
+      <p>Adults: {{ booking.adults }}</p>
+      <p>Kids: {{ booking.kids }}</p>
+      <p>Hike & Bite: {{ booking.hike_and_bite }}</p>
+      <p>Photography: {{ booking.photography_option || 'None' }}</p>
+      <hr />
+      <p><strong>Total: R{{ booking.total_price }}</strong></p>
+    </div>
 
-        <button class="btn btn-primary" @click="mockPay" :disabled="isPaying">
-          {{ isPaying ? 'Processing Payment...' : 'Pay Now' }}
-        </button>
-      </div>
+    <div v-if="booking" class="payment-form">
+      <label>Payment Method
+        <select v-model="paymentMethod">
+          <option disabled value="">Select method</option>
+          <option value="card">Card</option>
+          <option value="eft">EFT</option>
+          <option value="cash">Cash</option>
+        </select>
+      </label>
+
+      <button @click="makePayment" :disabled="isSubmitting">
+        {{ isSubmitting ? "Processing..." : "Pay Now" }}
+      </button>
     </div>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from "vue";
-import { useRouter } from "vue-router";
 import axios from "axios";
 import Swal from "sweetalert2";
+import { useRouter } from "vue-router";
 
 const router = useRouter();
 const booking = ref(null);
-const isPaying = ref(false);
+const paymentMethod = ref("");
+const isSubmitting = ref(false);
 
-onMounted(() => {
-  const pending = localStorage.getItem("pendingPayment");
-  if (pending) booking.value = JSON.parse(pending);
-});
+const pendingBooking = JSON.parse(localStorage.getItem("pendingPayment") || "{}");
 
-async function mockPay() {
-  if (!booking.value) return;
+const API_BASE = process.env.VUE_APP_API_BASE || "https://into-the-land-backend.onrender.com/api";
 
-  isPaying.value = true;
+async function fetchBooking() {
+  if (!pendingBooking?.booking_id) {
+    Swal.fire("Error", "No booking found for payment", "error");
+    router.push("/book");
+    return;
+  }
+
   try {
     const token = localStorage.getItem("token");
-    const API_BASE = process.env.VUE_APP_API_BASE || "https://into-the-land-backend.onrender.com/api";
+    const res = await axios.get(`${API_BASE}/bookings/${pendingBooking.booking_id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    booking.value = res.data;
+  } catch (err) {
+    console.error("Error fetching booking:", err);
+    Swal.fire("Error", "Failed to fetch booking", "error");
+    router.push("/book");
+  }
+}
 
-    // Update booking status to 'paid'
-    await axios.put(`${API_BASE}/bookings/${booking.value.booking_id}/status`, 
-      { status: 'paid' },
-      { headers: { Authorization: `Bearer ${token}` } }
+async function makePayment() {
+  if (!paymentMethod.value) {
+    Swal.fire("Error", "Please select a payment method", "error");
+    return;
+  }
+
+  isSubmitting.value = true;
+  try {
+    const token = localStorage.getItem("token");
+    const res = await axios.post(
+      `${API_BASE}/payments`,
+      {
+        booking_id: booking.value.id,
+        payment_method: paymentMethod.value,
+        amount: booking.value.total_price,
+      },
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
     );
 
-    Swal.fire("Success", "Payment successful! Your booking is confirmed.", "success");
+    Swal.fire("Success", "Payment completed successfully!", "success");
     localStorage.removeItem("pendingPayment");
     router.push("/my-bookings");
   } catch (err) {
     console.error("Payment error:", err);
-    Swal.fire("Error", "Payment failed. Please try again.", "error");
+    Swal.fire("Error", err.response?.data?.message || "Payment failed", "error");
   } finally {
-    isPaying.value = false;
+    isSubmitting.value = false;
   }
 }
+
+onMounted(fetchBooking);
 </script>
 
 <style scoped>
 .pay-page {
-  min-height: 100vh;
-  display: grid;
-  place-items: center;
-  padding: 2rem 1rem 3rem;
-  background: #f9fafb;
-}
-
-.card {
-  width: min(600px, 95vw);
+  max-width: 600px;
+  margin: 2rem auto;
+  padding: 1rem 2rem;
   background: #fff;
-  padding: 1.5rem;
-  border-radius: 16px;
-  box-shadow: 0 10px 24px rgba(0,0,0,.06);
+  border-radius: 12px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.08);
 }
 
-.title { margin-bottom: 1rem; font-size: 1.5rem; color: #0f172a; }
-
-p { margin: .5rem 0; color: #334155; }
-
-.btn {
-  display: inline-block; padding:.9rem 1.1rem; border-radius:10px; border:1px solid transparent; font-weight:800;
-  background:#16a34a; color:#fff; margin-top:1rem; cursor: pointer; width: 100%; text-align: center;
-  transition: transform .15s ease, background .2s ease, box-shadow .2s ease;
+.booking-summary p {
+  margin: 0.5rem 0;
 }
-.btn:hover { background:#15803d; transform: translateY(-1px); }
-.btn:disabled { background:#94a3b8; cursor: not-allowed; transform: none; }
+
+.payment-form {
+  margin-top: 1.5rem;
+}
+
+select, button {
+  width: 100%;
+  padding: 0.8rem 1rem;
+  margin-top: 0.5rem;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+}
+
+button {
+  background-color: #16a34a;
+  color: #fff;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+button:disabled {
+  background-color: #94a3b8;
+  cursor: not-allowed;
+}
 </style>
