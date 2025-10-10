@@ -1,23 +1,19 @@
 <template>
   <div class="book-trail-page" ref="rootEl">
-    <!-- Scroll progress -->
     <div class="scroll-progress">
       <div class="scroll-progress__bar" :style="{ width: scrollProgress + '%' }"></div>
     </div>
 
-    <!-- Login Required -->
     <div v-if="!isLoggedIn" class="card scroll-reveal">
       <h2 class="title">Login Required</h2>
       <p>You must be logged in to book a trail.</p>
       <button @click="$router.push('/profile')" class="btn btn-primary">Go to Login</button>
     </div>
 
-    <!-- Booking Form -->
     <div v-else class="card scroll-reveal">
       <h2 class="title">Book Your Adventure</h2>
 
       <form @submit.prevent="createBooking" class="form">
-        <!-- Area -->
         <label class="scroll-reveal">Pick Area
           <select v-model="selectedArea" @change="onAreaChange" required>
             <option disabled value="">Select an area</option>
@@ -25,7 +21,6 @@
           </select>
         </label>
 
-        <!-- Trail -->
         <label class="scroll-reveal">Pick Trail
           <select v-model="selectedTrail" :disabled="!selectedArea" required>
             <option disabled value="">Select a trail</option>
@@ -33,7 +28,6 @@
           </select>
         </label>
 
-        <!-- People -->
         <div class="row">
           <label class="mini scroll-reveal">Adults
             <input type="number" v-model.number="adults" min="1" required />
@@ -57,7 +51,6 @@
           </label>
         </div>
 
-        <!-- Addons -->
         <div class="addon-box scroll-reveal">
           <div class="row">
             <label class="mini">
@@ -93,7 +86,6 @@
           </select>
         </label>
 
-        <!-- Summary -->
         <div class="summary scroll-reveal">
           <h3>Final Cost</h3>
           <p>Petrol: R100 × {{ adults }} = R{{ 100 * adults }}</p>
@@ -119,7 +111,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from "vue";
+import { ref, computed, watch, onMounted, nextTick, onBeforeUnmount } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import axios from "axios";
 import Swal from "sweetalert2";
@@ -127,10 +119,7 @@ import Swal from "sweetalert2";
 const router = useRouter();
 const route = useRoute();
 
-// Auth state
 const isLoggedIn = ref(false);
-
-// Form data
 const selectedArea = ref("");
 const selectedTrail = ref("");
 const date = ref("");
@@ -141,40 +130,34 @@ const hikeAndBiteEnabled = ref(false);
 const hikeAndBiteCount = ref(0);
 const photography = ref("");
 
-// API Data
 const areas = ref([]);
 const availableTrails = ref([]);
 const isSubmitting = ref(false);
 
-// Min date
 const minDate = computed(() => new Date().toISOString().split("T")[0]);
-
-// Total people
 const totalPeople = computed(() => adults.value + kids.value);
-
-// Costs
 const hikeAndBiteCost = computed(() => (hikeAndBiteEnabled.value ? hikeAndBiteCount.value * 70 : 0));
 const photographyCost = computed(() => (photography.value === "2" ? 100 : photography.value === "4" ? 150 : 0));
 const baseCostPerAdult = 100 + 500 + 150;
 const totalCost = computed(() => adults.value * baseCostPerAdult + hikeAndBiteCost.value + photographyCost.value);
 
-// Watch Hike & Bite count
 watch([totalPeople, hikeAndBiteEnabled, adults], () => {
   if (!hikeAndBiteEnabled.value) hikeAndBiteCount.value = 0;
   if (hikeAndBiteCount.value > totalPeople.value) hikeAndBiteCount.value = totalPeople.value;
   if (hikeAndBiteCount.value < 0) hikeAndBiteCount.value = 0;
 });
 
-// Load areas & trails
 async function loadAreasAndTrails() {
   try {
     const API_BASE = process.env.VUE_APP_API_BASE || "https://into-the-land-backend.onrender.com/api";
     const areasRes = await axios.get(`${API_BASE}/areas`);
     areas.value = areasRes.data.map(a => ({ id: a.id, name: a.name, trails: [] }));
+
     const trailsRes = await axios.get(`${API_BASE}/trails`);
     const trailsData = trailsRes.data;
     areas.value.forEach(area => { area.trails = trailsData.filter(t => t.area_id === area.id); });
 
+    // Preselect from query
     const trailIdParam = route.query.trail;
     const areaParam = route.query.area;
     if (areaParam) {
@@ -206,7 +189,6 @@ function onAreaChange() {
   availableTrails.value = selectedArea.value ? selectedArea.value.trails : [];
 }
 
-// Create booking
 async function createBooking() {
   if (!selectedTrail.value || !date.value || !time.value) {
     Swal.fire("Error", "Please fill in all required fields", "error");
@@ -232,7 +214,7 @@ async function createBooking() {
     });
 
     const bookingForPayment = {
-      booking_id: res.data.booking.id,
+      booking_id: res.data.booking_id,
       area: selectedArea.value.name,
       trail: selectedTrail.value.title,
       date: date.value,
@@ -255,7 +237,7 @@ async function createBooking() {
   }
 }
 
-// Scroll & reveal
+// Scroll progress & reveal (same as before)
 const rootEl = ref(null);
 const scrollProgress = ref(0);
 let _raf = null;
@@ -275,7 +257,7 @@ function revealInitialInView() {
 }
 function setupScrollEffects() {
   revealObserver = new IntersectionObserver(
-    (entries) => entries.forEach(e => { if (e.isIntersecting) e.target.classList.add("visible"); } ),
+    (entries) => entries.forEach(e => { if (e.isIntersecting) e.target.classList.add("visible"); }),
     { threshold: 0.12, root: null, rootMargin: "0px 0px -10% 0px" }
   );
   rootEl.value?.querySelectorAll(".scroll-reveal").forEach(el => revealObserver.observe(el));
@@ -300,6 +282,7 @@ onBeforeUnmount(() => {
   if (revealObserver) revealObserver.disconnect();
 });
 </script>
+
 
 <style scoped>
 
