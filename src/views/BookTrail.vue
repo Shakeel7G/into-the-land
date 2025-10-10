@@ -302,140 +302,116 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
-.book-trail {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+
+.book-trail-page {
   min-height: 100vh;
-  padding: 2rem 1rem;
-  background: linear-gradient(to bottom right, #e9f5f0, #f7fafc);
-  color: #333;
-}
-
-.book-trail h1 {
-  font-size: 2rem;
-  margin-bottom: 1.5rem;
-  text-align: center;
-  font-weight: 700;
-  color: #1f2937;
-}
-
-.trail-info {
   background: #ffffff;
+  display: grid;
+  place-items: center;
+  padding: 2rem 1rem 3rem;
+  position: relative;
+}
+
+.scroll-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 4px;
+  width: 100%;
+  z-index: 100;
+}
+.scroll-progress__bar {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #16a34a, #22c55e);
+  transition: width .1s linear;
+}
+
+.card {
+  width: min(760px, 94vw);
+  background: #ffffff;
+  color: #111827;
+  border: 1px solid #e5e7eb;
   border-radius: 16px;
-  padding: 2rem;
-  width: 100%;
-  max-width: 800px;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-  margin-bottom: 2rem;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  padding: 1.25rem 1.25rem 1.5rem;
+  box-shadow: 0 10px 24px rgba(0,0,0,.06);
 }
 
-.trail-info:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+.title { margin: 0 0 .9rem; color:#0f172a; }
+
+.form { display: flex; flex-direction: column; }
+label { display:block; font-weight:600; margin:.65rem 0 .35rem; color:#0f172a; }
+input, select {
+  width:100%;
+  padding:.7rem .85rem;
+  border-radius:10px;
+  border:1px solid #e5e7eb;
+  background:#ffffff;
+  color:#0f172a;
+  outline:none;
+  transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease;
+  box-sizing: border-box;
+  max-width: 100%;
+}
+input::placeholder { color:#94a3b8; }
+input:focus, select:focus {
+  border-color:#16a34a;
+  box-shadow: 0 0 0 2px rgba(22,163,74,.15);
+  transform: translateY(-1px);
 }
 
-.trail-info img {
-  width: 100%;
-  height: 300px;
-  object-fit: cover;
-  border-radius: 12px;
-  margin-bottom: 1.5rem;
+.checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: .55rem;
+  user-select: none;
 }
+.checkbox input { width:auto; transform: translateY(1px); }
 
-.trail-details {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
+.muted { color:#6b7280; }
+.disabled { opacity:.6; pointer-events:none; }
 
-.trail-details span {
-  font-size: 1rem;
-  color: #555;
-}
-
-.trail-details strong {
-  color: #111;
-}
-
-.booking-form {
-  background: #fff;
-  border-radius: 16px;
-  padding: 2rem;
-  width: 100%;
-  max-width: 800px;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-  display: flex;
-  flex-direction: column;
+.row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 1rem;
 }
+.row > * { min-width: 0; }
+.mini { display: flex; flex-direction: column; gap: .35rem; }
 
-.booking-form label {
-  font-weight: 600;
-  color: #333;
+@media (max-width: 680px) {
+  .row { grid-template-columns: 1fr; }
 }
 
-.booking-form input,
-.booking-form select {
-  padding: 0.8rem;
-  border: 1px solid #d1d5db;
-  border-radius: 10px;
-  font-size: 1rem;
-  outline: none;
-  transition: border-color 0.3s ease;
+.addon-box {
+  background:#f8fafc;
+  border:1px solid #e5e7eb;
+  border-radius:12px;
+  padding: .75rem .9rem;
+  margin: .6rem 0 .2rem;
 }
 
-.booking-form input:focus,
-.booking-form select:focus {
-  border-color: #16a34a;
+.summary {
+  background:#f8fafc;
+  border:1px solid #e5e7eb;
+  border-radius:12px;
+  padding:1rem;
+  margin-top:1rem;
 }
+.summary h3 { margin: 0 0 .35rem; color:#0f172a; }
+.summary p { margin:.25rem 0; color:#334155; }
 
-.booking-form button {
-  background-color: #16a34a;
-  color: white;
-  padding: 0.9rem 1.2rem;
-  border: none;
-  border-radius: 10px;
+.btn {
+  display:inline-block; padding:.9rem 1.1rem; border-radius:10px; border:1px solid transparent; text-decoration:none; font-weight:800;
+  background:#16a34a; color:#fff; margin-top:1rem;
+  transition: transform .15s ease, background .2s ease, box-shadow .2s ease;
+  width: 100%;
+  text-align: center;
   cursor: pointer;
-  font-size: 1rem;
-  font-weight: 600;
-  transition: background-color 0.3s ease, transform 0.2s ease;
 }
+.btn:hover { background:#15803d; transform: translateY(-1px); }
+.btn:disabled { background:#94a3b8; cursor: not-allowed; transform: none; }
 
-.booking-form button:hover {
-  background-color: #15803d;
-  transform: scale(1.03);
-}
-
-.success-message {
-  background-color: #dcfce7;
-  color: #166534;
-  padding: 1rem;
-  border-radius: 10px;
-  font-weight: 500;
-  text-align: center;
-  margin-top: 1rem;
-}
-
-.error-message {
-  background-color: #fee2e2;
-  color: #b91c1c;
-  padding: 1rem;
-  border-radius: 10px;
-  font-weight: 500;
-  text-align: center;
-  margin-top: 1rem;
-}
-
-@media (max-width: 768px) {
-  .trail-info,
-  .booking-form {
-    padding: 1.5rem;
-  }
-
-  .trail-info img {
-    height: 200px;
-  }
-}
+.scroll-reveal { opacity: 0; transform: translateY(18px); transition: transform .6s ease, opacity .6s ease; }
+.scroll-reveal.visible { opacity: 1; transform: translateY(0); }
 </style>
