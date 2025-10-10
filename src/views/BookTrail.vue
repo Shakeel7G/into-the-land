@@ -175,7 +175,6 @@ async function loadAreasAndTrails() {
     const trailsData = trailsRes.data;
     areas.value.forEach(area => { area.trails = trailsData.filter(t => t.area_id === area.id); });
 
-    // Preselect from query
     const trailIdParam = route.query.trail;
     const areaParam = route.query.area;
     if (areaParam) {
@@ -227,12 +226,13 @@ async function createBooking() {
       photography_option: photography.value || null,
       total_price: totalCost.value
     };
+
     const res = await axios.post(`${API_BASE}/bookings`, bookingData, {
       headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }
     });
 
     const bookingForPayment = {
-      booking_id: res.data.booking_id,
+      booking_id: res.data.booking.id,
       area: selectedArea.value.name,
       trail: selectedTrail.value.title,
       date: date.value,
@@ -275,7 +275,7 @@ function revealInitialInView() {
 }
 function setupScrollEffects() {
   revealObserver = new IntersectionObserver(
-    (entries) => entries.forEach(e => { if (e.isIntersecting) e.target.classList.add("visible"); }),
+    (entries) => entries.forEach(e => { if (e.isIntersecting) e.target.classList.add("visible"); } ),
     { threshold: 0.12, root: null, rootMargin: "0px 0px -10% 0px" }
   );
   rootEl.value?.querySelectorAll(".scroll-reveal").forEach(el => revealObserver.observe(el));
