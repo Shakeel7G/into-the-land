@@ -300,3 +300,142 @@ onBeforeUnmount(() => {
   if (revealObserver) revealObserver.disconnect();
 });
 </script>
+
+<style scoped>
+.book-trail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+  padding: 2rem 1rem;
+  background: linear-gradient(to bottom right, #e9f5f0, #f7fafc);
+  color: #333;
+}
+
+.book-trail h1 {
+  font-size: 2rem;
+  margin-bottom: 1.5rem;
+  text-align: center;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.trail-info {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 2rem;
+  width: 100%;
+  max-width: 800px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2rem;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.trail-info:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+}
+
+.trail-info img {
+  width: 100%;
+  height: 300px;
+  object-fit: cover;
+  border-radius: 12px;
+  margin-bottom: 1.5rem;
+}
+
+.trail-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.trail-details span {
+  font-size: 1rem;
+  color: #555;
+}
+
+.trail-details strong {
+  color: #111;
+}
+
+.booking-form {
+  background: #fff;
+  border-radius: 16px;
+  padding: 2rem;
+  width: 100%;
+  max-width: 800px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.booking-form label {
+  font-weight: 600;
+  color: #333;
+}
+
+.booking-form input,
+.booking-form select {
+  padding: 0.8rem;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  font-size: 1rem;
+  outline: none;
+  transition: border-color 0.3s ease;
+}
+
+.booking-form input:focus,
+.booking-form select:focus {
+  border-color: #16a34a;
+}
+
+.booking-form button {
+  background-color: #16a34a;
+  color: white;
+  padding: 0.9rem 1.2rem;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 600;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.booking-form button:hover {
+  background-color: #15803d;
+  transform: scale(1.03);
+}
+
+.success-message {
+  background-color: #dcfce7;
+  color: #166534;
+  padding: 1rem;
+  border-radius: 10px;
+  font-weight: 500;
+  text-align: center;
+  margin-top: 1rem;
+}
+
+.error-message {
+  background-color: #fee2e2;
+  color: #b91c1c;
+  padding: 1rem;
+  border-radius: 10px;
+  font-weight: 500;
+  text-align: center;
+  margin-top: 1rem;
+}
+
+@media (max-width: 768px) {
+  .trail-info,
+  .booking-form {
+    padding: 1.5rem;
+  }
+
+  .trail-info img {
+    height: 200px;
+  }
+}
+</style>
