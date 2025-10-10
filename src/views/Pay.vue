@@ -1,121 +1,100 @@
 <template>
-  <div class="payment-container">
-    <h2>Complete Payment</h2>
+  <div class="pay-page">
+    <div class="card">
+      <h2 class="title">Payment</h2>
 
-    <div v-if="booking">
-      <p><strong>Trail:</strong> {{ booking.trail_title }}</p>
-      <p><strong>Total:</strong> R{{ booking.total_price }}</p>
+      <div v-if="!booking">
+        <p>No pending booking found. Please go back and book a trail first.</p>
+        <button class="btn btn-primary" @click="$router.push('/book-trail')">Book Now</button>
+      </div>
+
+      <div v-else>
+        <p><strong>Trail:</strong> {{ booking.trail }}</p>
+        <p><strong>Area:</strong> {{ booking.area }}</p>
+        <p><strong>Date:</strong> {{ booking.date }}</p>
+        <p><strong>Time:</strong> {{ booking.time }}</p>
+        <p><strong>Adults:</strong> {{ booking.adults }}</p>
+        <p><strong>Kids:</strong> {{ booking.kids }}</p>
+        <p v-if="booking.hikeAndBite">Hike & Bite: {{ booking.hikeAndBite }}</p>
+        <p v-if="booking.photography">Photography: {{ booking.photography }}</p>
+        <hr />
+        <p><strong>Total:</strong> R{{ booking.totalCost }}</p>
+
+        <button class="btn btn-primary" @click="mockPay" :disabled="isPaying">
+          {{ isPaying ? 'Processing Payment...' : 'Pay Now' }}
+        </button>
+      </div>
     </div>
-
-    <form @submit.prevent="makePayment">
-      <label for="paymentMethod">Select Payment Method:</label>
-      <select v-model="paymentMethod" id="paymentMethod" required>
-        <option disabled value="">-- Choose Payment Method --</option>
-        <option value="credit_card">Credit Card</option>
-        <option value="paypal">PayPal</option>
-        <option value="cash">Cash</option>
-      </select>
-
-      <button type="submit" class="pay-btn">Pay Now</button>
-    </form>
-
-    <p v-if="message" class="message">{{ message }}</p>
   </div>
 </template>
 
-<script>
-import { ref } from "vue";
-import api from "@/services/api.js";
+<script setup>
+import { ref, onMounted } from "vue";
+import { useRouter } from "vue-router";
+import axios from "axios";
+import Swal from "sweetalert2";
 
-export default {
-  name: "Pay",
-  setup() {
-    const bookingId = ref(null);
-    const amount = ref(0);
-    const paymentMethod = ref("card");
-    const isLoading = ref(false);
-    const message = ref("");
+const router = useRouter();
+const booking = ref(null);
+const isPaying = ref(false);
 
-    // Example: receive booking data via route or props
-    // Make sure your router passes booking_id and amount via route params or state
-    const route = useRoute();
-    bookingId.value = route.query.booking_id;
-    amount.value = route.query.amount;
+onMounted(() => {
+  const pending = localStorage.getItem("pendingPayment");
+  if (pending) booking.value = JSON.parse(pending);
+});
 
-    // Get token
+async function mockPay() {
+  if (!booking.value) return;
+
+  isPaying.value = true;
+  try {
     const token = localStorage.getItem("token");
+    const API_BASE = process.env.VUE_APP_API_BASE || "https://into-the-land-backend.onrender.com/api";
 
-    const handlePayment = async () => {
-      if (!bookingId.value || !amount.value) {
-        message.value = "Missing booking or payment info.";
-        return;
-      }
+    // Update booking status to 'paid'
+    await axios.put(`${API_BASE}/bookings/${booking.value.booking_id}/status`, 
+      { status: 'paid' },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
 
-      isLoading.value = true;
-      message.value = "";
-
-      try {
-        const res = await api.post(
-          "/payments",
-          {
-            booking_id: bookingId.value,
-            amount: amount.value,
-            payment_method: paymentMethod.value,
-            payment_status: "completed", // default for now
-          },
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-
-        console.log("Payment success:", res.data);
-        message.value = "✅ Payment processed successfully!";
-      } catch (err) {
-        console.error("Payment error:", err);
-        message.value = "❌ Payment failed. Please try again.";
-      } finally {
-        isLoading.value = false;
-      }
-    };
-
-    return {
-      bookingId,
-      amount,
-      paymentMethod,
-      isLoading,
-      message,
-      handlePayment,
-    };
-  },
-};
+    Swal.fire("Success", "Payment successful! Your booking is confirmed.", "success");
+    localStorage.removeItem("pendingPayment");
+    router.push("/my-bookings");
+  } catch (err) {
+    console.error("Payment error:", err);
+    Swal.fire("Error", "Payment failed. Please try again.", "error");
+  } finally {
+    isPaying.value = false;
+  }
+}
 </script>
 
 <style scoped>
-.payment-container {
-  max-width: 400px;
-  margin: 40px auto;
-  text-align: center;
-  padding: 20px;
+.pay-page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 2rem 1rem 3rem;
+  background: #f9fafb;
+}
+
+.card {
+  width: min(600px, 95vw);
   background: #fff;
-  border-radius: 12px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+  border-radius: 16px;
+  box-shadow: 0 10px 24px rgba(0,0,0,.06);
 }
-.pay-btn {
-  background: #28a745;
-  color: white;
-  padding: 10px 18px;
-  border: none;
-  border-radius: 8px;
-  margin-top: 15px;
-  cursor: pointer;
+
+.title { margin-bottom: 1rem; font-size: 1.5rem; color: #0f172a; }
+
+p { margin: .5rem 0; color: #334155; }
+
+.btn {
+  display: inline-block; padding:.9rem 1.1rem; border-radius:10px; border:1px solid transparent; font-weight:800;
+  background:#16a34a; color:#fff; margin-top:1rem; cursor: pointer; width: 100%; text-align: center;
+  transition: transform .15s ease, background .2s ease, box-shadow .2s ease;
 }
-.pay-btn:hover {
-  background: #218838;
-}
-.message {
-  margin-top: 15px;
-  color: #333;
-}
+.btn:hover { background:#15803d; transform: translateY(-1px); }
+.btn:disabled { background:#94a3b8; cursor: not-allowed; transform: none; }
 </style>
