@@ -30,7 +30,7 @@
             Hike and Bite: {{ booking.hikeAndBite }} person(s)
           </div>
           <div class="pay-meta" v-if="booking.photography">
-            Photography: {{ photographyText }}
+            Photography: {{ booking.photography }}
           </div>
         </div>
         <div class="pay-amount">
@@ -56,39 +56,6 @@
           >
           <label :for="method.value" class="option-label">
             <div class="option-content">
-              <div class="payment-logo">
-                <div v-if="method.value === 'mastercard'" class="mastercard-logo">
-                  <svg width="40" height="24" viewBox="0 0 40 24" fill="none">
-                    <rect width="40" height="24" rx="4" fill="white" stroke="#ddd"/>
-                    <circle cx="13" cy="12" r="6" fill="#EB001B"/>
-                    <circle cx="23" cy="12" r="6" fill="#F79E1B"/>
-                    <path d="M18 7.5c1.5 1.2 2.5 3 2.5 4.5s-1 3.3-2.5 4.5c-1.5-1.2-2.5-3-2.5-4.5s1-3.3 2.5-4.5z" fill="#FF5F00"/>
-                  </svg>
-                </div>
-                <div v-if="method.value === 'ozow'" class="ozow-logo">
-                  <svg width="60" height="24" viewBox="0 0 60 24" fill="none">
-                    <rect width="60" height="24" rx="4" fill="white" stroke="#ddd"/>
-                    <g transform="translate(4, 4)">
-                      <circle cx="8" cy="8" r="7" fill="#00D4AA" stroke="#00D4AA" stroke-width="0.5"/>
-                      <circle cx="8" cy="8" r="5" fill="none" stroke="white" stroke-width="1"/>
-                      <circle cx="8" cy="8" r="3" fill="none" stroke="white" stroke-width="1"/>
-                      <circle cx="8" cy="8" r="1.5" fill="white"/>
-                    </g>
-                    <text x="20" y="9" font-family="Arial, sans-serif" font-size="6" font-weight="bold" fill="#333">OZOW</text>
-                    <text x="20" y="15" font-family="Arial, sans-serif" font-size="3" fill="#666">Secure Payments</text>
-                  </svg>
-                </div>
-                <div v-if="method.value === 'applepay'" class="applepay-logo">
-                  <svg width="50" height="24" viewBox="0 0 50 24" fill="none">
-                    <rect width="50" height="24" rx="4" fill="white" stroke="#ddd"/>
-                    <g transform="translate(4, 4)">
-                      <path d="M7.5 1c.3-.8 1.2-1.4 2-1.4.1.8-.2 1.6-.7 2.1-.5.6-1.3 1-2 .9-.1-.8.3-1.6.7-1.6z" fill="black"/>
-                      <path d="M9.5 1.8c-1.1-.1-2.1.6-2.6.6s-1.4-.6-2.3-.6c-1.2 0-2.3.7-2.9 1.8-1.2 2.1-.3 5.2.9 6.9.6.8 1.3 1.7 2.2 1.7.9 0 1.2-.6 2.3-.6s1.4.6 2.3.6c.9 0 1.6-.8 2.2-1.7.7-1 1-2 1-2s-1.9-.7-1.9-2.8c0-1.7 1.4-2.5 1.4-2.5s-.8-1.3-2.1-1.4h-.5z" fill="black"/>
-                    </g>
-                    <text x="16" y="15" font-family="Arial, sans-serif" font-size="8" font-weight="300" fill="black">Pay</text>
-                  </svg>
-                </div>
-              </div>
               <div class="option-text">
                 <span class="option-title">{{ method.title }}</span>
                 <span class="option-subtitle">{{ method.subtitle }}</span>
@@ -110,13 +77,57 @@
           <button class="close-btn" @click="closeModal">×</button>
           <h2>Mastercard Payment</h2>
         </div>
-        <div class="form-group"><label>Cardholder Name</label><input v-model="cardDetails.name" required /></div>
-        <div class="form-group"><label>Card Number</label><input v-model="cardDetails.number" placeholder="1234 5678 9012 3456" required /></div>
-        <div class="form-row">
-          <div class="form-group"><label>Expiry</label><input v-model="cardDetails.expiry" placeholder="MM/YY" required /></div>
-          <div class="form-group"><label>CVC</label><input v-model="cardDetails.cvc" placeholder="123" required /></div>
+
+        <div class="form-group">
+          <label>Cardholder Name</label>
+          <input
+            v-model="cardDetails.name"
+            type="text"
+            placeholder="John Doe"
+            required
+          />
         </div>
-        <button class="pay-now-btn" @click="processPayment">Pay R{{ amount }}</button>
+
+        <div class="form-group">
+          <label>Card Number</label>
+          <input
+            v-model="cardDetails.number"
+            type="text"
+            maxlength="16"
+            pattern="\\d{16}"
+            placeholder="1234 5678 9012 3456"
+            required
+          />
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Expiry (MM/YY)</label>
+            <input
+              v-model="cardDetails.expiry"
+              type="text"
+              maxlength="5"
+              placeholder="08/27"
+              required
+            />
+          </div>
+          <div class="form-group">
+            <label>CVC</label>
+            <input
+              v-model="cardDetails.cvc"
+              type="text"
+              maxlength="3"
+              pattern="\\d{3}"
+              placeholder="123"
+              required
+            />
+          </div>
+        </div>
+
+        <button class="pay-now-btn" :disabled="loading" @click="validateAndPay">
+          <span v-if="!loading">Pay R{{ amount }}</span>
+          <span v-else class="loading-spinner"></span>
+        </button>
         <button class="cancel-btn" @click="closeModal">Cancel</button>
       </div>
 
@@ -139,13 +150,14 @@
           <button class="action-btn profile-btn" @click="goToProfile">Go to Profile</button>
           <button class="action-btn book-again-btn" @click="bookAnother">Book Another Trail</button>
         </div>
+        <p class="redirect-msg">Redirecting to your profile...</p>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, computed } from "vue";
+import { ref, reactive, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import axios from "axios";
 import Swal from "sweetalert2";
@@ -155,12 +167,19 @@ const screen = ref("select");
 const selectedPayment = ref("");
 const booking = ref({});
 const amount = ref(0);
+const loading = ref(false);
 
-const cardDetails = reactive({ name: "", number: "", expiry: "", cvc: "" });
+const cardDetails = reactive({
+  name: "",
+  number: "",
+  expiry: "",
+  cvc: "",
+});
+
 const paymentMethods = [
-  { value: "mastercard", title: "Mastercard", subtitle: "Pay with card" },
-  { value: "ozow", title: "EFT - Ozow", subtitle: "Instant transfer" },
-  { value: "applepay", title: "Apple Pay", subtitle: "Quick pay" },
+  { value: "mastercard", title: "Mastercard", subtitle: "Pay securely with card" },
+  { value: "ozow", title: "Ozow", subtitle: "Instant EFT transfer" },
+  { value: "applepay", title: "Apple Pay", subtitle: "Quick mobile payment" },
 ];
 
 const API_BASE = "https://into-the-land-backend.onrender.com/api";
@@ -173,8 +192,20 @@ onMounted(() => {
   }
 });
 
+function validateAndPay() {
+  const { name, number, expiry, cvc } = cardDetails;
+
+  if (!name.trim()) return showError("Cardholder name is required");
+  if (!/^\d{16}$/.test(number)) return showError("Card number must be 16 digits");
+  if (!/^\d{2}\/\d{2}$/.test(expiry)) return showError("Expiry must be in MM/YY format");
+  if (!/^\d{3}$/.test(cvc)) return showError("CVC must be 3 digits");
+
+  processPayment();
+}
+
 async function processPayment() {
   try {
+    loading.value = true;
     const token = localStorage.getItem("token");
     const user = JSON.parse(localStorage.getItem("user"));
 
@@ -189,12 +220,20 @@ async function processPayment() {
       headers: { Authorization: `Bearer ${token}` },
     });
 
+    loading.value = false;
     screen.value = "success";
     localStorage.removeItem("pendingPayment");
+
+    setTimeout(() => goToProfile(), 3000);
   } catch (err) {
+    loading.value = false;
     console.error("Payment error:", err);
     Swal.fire("Error", "Payment failed. Please try again.", "error");
   }
+}
+
+function showError(msg) {
+  Swal.fire("Validation Error", msg, "warning");
 }
 
 function selectPayment(method) {
@@ -210,7 +249,23 @@ function bookAnother() {
   router.push("/book");
 }
 </script>
+
 <style scoped>
+.loading-spinner {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  border-top-color: transparent;
+  animation: spin 0.8s linear infinite;
+  vertical-align: middle;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
 .payment-modal-overlay {
   position: fixed;
   top: 0;
