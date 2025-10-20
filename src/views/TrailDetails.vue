@@ -3,7 +3,7 @@
     <img :src="`${BACKEND_URL}${trail.image_url}`" :alt="trail.title" class="trail-image" /> <!-- Uses backend URL from env -->
     <h2>{{ trail.title }}</h2>
     <p>{{ trail.description }}</p>
-  <button @click="bookNow" class="book-btn">Book Now</button>
+    <router-link :to="`/book?trail=${trail.id}&area=${encodeURIComponent(trail.area)}`" class="book-btn">Book Now</router-link>
   </div>
   <div v-else>
     <p>Loading trail details...</p>
@@ -12,14 +12,13 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 
 import api from '../services/api.js' // Use your Axios instance
 
 
 // import axios from 'axios'
 const route = useRoute()
-const router = useRouter()
 const trailId = route.params.id
 const trail = ref(null)
 const BACKEND_URL = process.env.VUE_APP_BACKEND_URL || 'https://into-the-land-backend.onrender.com';
@@ -33,17 +32,6 @@ onMounted(async () => {
     console.error('Error fetching trail details:', error)
   }
 })
-
-function bookNow() {
-  // Save pending selection so BookTrail can prefill even if the user is redirected to login
-  try {
-    const pending = { id: trail.value.id, area: trail.value.area };
-    localStorage.setItem('pendingTrail', JSON.stringify(pending));
-  } catch (e) {
-    // ignore
-  }
-  router.push(`/book?trail=${trail.value.id}&area=${encodeURIComponent(trail.value.area)}`);
-}
 </script>
 
 <style scoped>
