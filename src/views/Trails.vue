@@ -201,6 +201,7 @@ onMounted(async () => {
 }
 
 .search-input {
+  max-width: 400px;
   width: 100%;
   padding: 0.85rem 1rem 0.85rem 3rem;
   border: 1px solid #ced4da;
