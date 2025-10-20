@@ -27,7 +27,7 @@
   box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.1);
   font-family: Arial, sans-serif;
   font-size: 0.9rem;
-  z-index: 1000;
+  z-index: 10;
   display: flex;
   
   flex-direction: column;
